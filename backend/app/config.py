@@ -1,0 +1,51 @@
+"""
+Configuration Management
+
+This module handles all environment variables and application settings.
+Uses pydantic-settings to automatically load from .env file and validate types.
+"""
+
+from pydantic_settings import BaseSettings
+from typing import Optional
+
+
+class Settings(BaseSettings):
+    """
+    Application settings loaded from environment variables.
+    
+    All settings can be overridden by creating a .env file in the backend/ directory.
+    """
+    
+    # Supabase Database Configuration
+    # Get these from your Supabase project dashboard
+    supabase_url: str = ""
+    supabase_service_key: str = ""
+    
+    # AI Model Configuration
+    # Path to the directory containing your trained pose detection models
+    model_dir: str = "./trained_pose_model"
+    
+    # Security Configuration
+    # IMPORTANT: Change this in production! Used for JWT token signing
+    secret_key: str = "change-this-in-production-use-openssl-rand-hex-32"
+    
+    # Environment Configuration
+    # Options: "development", "staging", "production"
+    environment: str = "development"
+    
+    # CORS Configuration
+    # Frontend URLs that are allowed to make requests to this API
+    frontend_url: str = "http://localhost:3000"
+    frontend_url_alt: str = "http://localhost:5173"
+    
+    class Config:
+        """Pydantic configuration"""
+        # This tells pydantic to look for a .env file in the backend/ directory
+        env_file = ".env"
+        # Case insensitive environment variable names
+        case_sensitive = False
+
+
+# Create a single instance of settings that will be imported throughout the app
+# This ensures all modules use the same configuration
+settings = Settings()

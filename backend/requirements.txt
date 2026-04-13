@@ -1,0 +1,27 @@
+# Core FastAPI and Server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+
+# Environment and Configuration
+python-dotenv==1.0.0
+pydantic-settings==2.1.0
+
+# Database
+supabase==2.3.0
+
+# File Upload Support
+python-multipart==0.0.6
+
+# AI and Computer Vision
+mediapipe==0.10.9
+tensorflow==2.15.0
+opencv-python==4.9.0.80
+numpy==1.26.3
+scikit-learn==1.4.0
+
+# Authentication and Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Additional Utilities
+python-dateutil==2.8.2
