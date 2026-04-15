@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from app.config import settings
 
 # Import routers
-from app.routes import auth, users
+from app.routes import auth, users, reports
 
 
 @asynccontextmanager
@@ -81,6 +81,9 @@ app.include_router(auth.router)
 
 # Include user profile routes
 app.include_router(users.router)
+
+# Include reports routes
+app.include_router(reports.router)
 
 
 # ============================================================================

@@ -8,7 +8,8 @@
  * - import apiClient from '@/api'
  * - import { authApi, login, register } from '@/api'
  * - import { usersApi, saveProfile } from '@/api'
- * - import type { AuthUser, AuthResponse, ProfileData } from '@/api'
+ * - import { reportsApi, getAllReports } from '@/api'
+ * - import type { AuthUser, AuthResponse, ProfileData, ReportSummary } from '@/api'
  */
 
 // Export the axios client instance as default
@@ -20,3 +21,6 @@ export * from './auth'
 
 // Export all user-related functions and types
 export * from './users'
+
+// Export all reports-related functions and types
+export * from './reports'
