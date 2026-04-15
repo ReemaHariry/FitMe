@@ -7,7 +7,7 @@ Uses pydantic-settings to automatically load from .env file and validate types.
 
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
-from typing import Optional
+from typing import Optional, List
 
 
 class Settings(BaseSettings):
@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     # Frontend URLs that are allowed to make requests to this API
     frontend_url: str = "http://localhost:3000"
     frontend_url_alt: str = "http://localhost:5173"
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]  # ADDED for Feature 6
+    
+    # File Upload Configuration (for Feature 6)
+    max_upload_size_mb: int = 100  # ADDED: Maximum video upload size in MB
 
 
 # Create a single instance of settings that will be imported throughout the app

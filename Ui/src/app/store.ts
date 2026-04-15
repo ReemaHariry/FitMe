@@ -6,7 +6,7 @@ export interface User {
   id: string
   name: string
   email: string
-  onboardingCompleted: boolean
+  onboarding_complete: boolean  // FIXED: Match backend field name
   profile?: {
     gender: 'male' | 'female'
     age: number
@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>()(
             id: response.user.id,
             name: response.user.name,
             email: response.user.email,
-            onboardingCompleted: response.user.onboarding_complete,
+            onboarding_complete: response.user.onboarding_complete,  // FIXED: Use correct field name
           }
           
           // Update state
@@ -102,7 +102,7 @@ export const useAuthStore = create<AuthState>()(
             id: response.user.id,
             name: response.user.name,
             email: response.user.email,
-            onboardingCompleted: response.user.onboarding_complete, // Should be false for new users
+            onboarding_complete: response.user.onboarding_complete,  // FIXED: Use correct field name
           }
           
           // Update state
@@ -169,7 +169,7 @@ export const useAuthStore = create<AuthState>()(
             id: userData.id,
             name: userData.name,
             email: userData.email,
-            onboardingCompleted: userData.onboarding_complete,
+            onboarding_complete: userData.onboarding_complete,  // FIXED: Use correct field name
           }
           
           // Restore user to state
@@ -193,7 +193,7 @@ export const useAuthStore = create<AuthState>()(
       completeOnboarding: () => {
         const user = get().user
         if (user) {
-          set({ user: { ...user, onboardingCompleted: true } })
+          set({ user: { ...user, onboarding_complete: true } })  // FIXED: Use correct field name
         }
       },
     }),

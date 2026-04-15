@@ -43,7 +43,7 @@ export default function Login() {
       
       // Check if user needs onboarding
       const { user } = useAuthStore.getState()
-      if (user?.onboardingCompleted) {
+      if (user?.onboarding_complete) {  // FIXED: Use correct field name
         navigate('/dashboard')
       } else {
         navigate('/onboarding')

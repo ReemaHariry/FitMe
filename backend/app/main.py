@@ -57,12 +57,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     # Allow requests from these origins (your React dev servers)
-    allow_origins=[
-        settings.frontend_url,      # http://localhost:3000
-        settings.frontend_url_alt,  # http://localhost:5173
-        "http://localhost:3000",    # Hardcoded fallback
-        "http://localhost:5173",    # Hardcoded fallback
-    ],
+    allow_origins=settings.cors_origins,  # FIXED: Use config instead of hardcoded
     # Allow cookies and authentication headers
     allow_credentials=True,
     # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)

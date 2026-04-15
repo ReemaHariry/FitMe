@@ -63,10 +63,11 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear the invalid token from localStorage
       localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
       
-      // Redirect to login page
-      // Only redirect if not already on login page to avoid infinite loop
-      if (window.location.pathname !== '/login') {
+      // FIXED: Only redirect if not already on login/register page to avoid issues
+      const currentPath = window.location.pathname
+      if (currentPath !== '/login' && currentPath !== '/register') {
         window.location.href = '/login'
       }
     }
