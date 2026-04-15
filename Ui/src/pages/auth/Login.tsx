@@ -22,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const { login } = useAuthStore()
   const { t } = useI18nStore()
@@ -36,13 +37,20 @@ export default function Login() {
 
   const onSubmit = async (data: LoginForm) => {
     setLoading(true)
+    setError(null)
     try {
       await login(data.email, data.password, data.rememberMe)
-      navigate('/dashboard')
+      
+      // Check if user needs onboarding
+      const { user } = useAuthStore.getState()
+      if (user?.onboardingCompleted) {
+        navigate('/dashboard')
+      } else {
+        navigate('/onboarding')
+      }
     } catch (error: any) {
       console.error('Login failed:', error)
-      // You could show the error message to the user here
-      alert(error.message || 'Login failed')
+      setError(error.message || 'Login failed. Please check your credentials.')
     } finally {
       setLoading(false)
     }
@@ -72,6 +80,12 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+
             <div>
               <Input
                 {...register('email')}

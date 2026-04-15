@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuthStore } from '@/app/store'
 import { useI18nStore } from '@/app/i18n'
+import { usersApi } from '@/api/users'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -34,6 +35,7 @@ const steps = [
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const { updateProfile, completeOnboarding } = useAuthStore()
   const { t } = useI18nStore()
@@ -76,12 +78,42 @@ export default function Onboarding() {
 
   const onSubmit = async (data: OnboardingForm) => {
     setLoading(true)
+    setError(null)
     try {
-      updateProfile(data)
+      // Convert form data to API format
+      const profileData = {
+        gender: data.gender,
+        age: data.age,
+        height: data.height,
+        weight: data.weight,
+        fitness_goal: data.fitnessGoal,
+        training_days_per_week: data.trainingDaysPerWeek,
+        preferred_workout_duration: data.preferredWorkoutDuration,
+      }
+      
+      // Save to backend
+      await usersApi.saveProfile(profileData)
+      
+      // Update local state
+      updateProfile({
+        gender: data.gender,
+        age: data.age,
+        height: data.height,
+        weight: data.weight,
+        fitnessGoal: data.fitnessGoal,
+        experienceLevel: 'beginner', // Default value
+        trainingDaysPerWeek: data.trainingDaysPerWeek,
+        preferredWorkoutDuration: data.preferredWorkoutDuration,
+      })
+      
+      // Mark onboarding as complete
       completeOnboarding()
+      
+      // Navigate to dashboard
       navigate('/dashboard')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Onboarding failed:', error)
+      setError(error.response?.data?.detail || error.message || 'Failed to save profile. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -225,6 +257,12 @@ export default function Onboarding() {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)}>
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}

@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuthStore } from './app/store'
 import { useThemeStore } from './app/theme'
 import Layout from './components/layout/Layout'
@@ -16,8 +17,13 @@ import Profile from './pages/profile/Profile'
 import Settings from './pages/settings/Settings'
 
 function App() {
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user, checkAuth } = useAuthStore()
   const { theme } = useThemeStore()
+
+  // Check authentication on app startup
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   return (
     <div className={theme}>
