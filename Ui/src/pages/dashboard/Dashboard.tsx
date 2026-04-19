@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Play, Zap, Calendar, TrendingUp, Award, Target } from 'lucide-react'
+import { Play, Zap, Calendar, TrendingUp, Award, Target, Upload } from 'lucide-react'
 import { useI18nStore } from '@/app/i18n'
 import { useAuthStore } from '@/app/store'
 import Button from '@/components/ui/Button'
@@ -120,6 +120,14 @@ export default function Dashboard() {
             >
               <Play className="w-4 h-4 mr-2" />
               {t('dashboard.startTraining')}
+            </Button>
+            <Button
+              onClick={() => navigate('/upload-video')}
+              variant="outline"
+              className="flex items-center"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Video
             </Button>
           </div>
         </div>

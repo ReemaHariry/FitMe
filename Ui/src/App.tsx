@@ -12,7 +12,7 @@ import WorkoutDetail from './pages/workout/WorkoutDetail'
 import LiveTraining from './pages/live-training/LiveTraining'
 import Reports from './pages/reports/Reports'
 import ReportDetail from './pages/reports/ReportDetail'
-
+import VideoUpload from './pages/VideoUpload'
 import Profile from './pages/profile/Profile'
 import Settings from './pages/settings/Settings'
 
@@ -57,6 +57,7 @@ function App() {
             <Route path="workouts" element={<Workouts />} />
             <Route path="workouts/:id" element={<WorkoutDetail />} />
             <Route path="live-training" element={<LiveTraining />} />
+            <Route path="upload-video" element={<VideoUpload />} />
             <Route path="reports" element={<Reports />} />
             <Route path="reports/:id" element={<ReportDetail />} />
             <Route path="profile" element={<Profile />} />

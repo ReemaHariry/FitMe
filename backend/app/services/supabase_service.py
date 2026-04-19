@@ -13,7 +13,12 @@ Why centralize this?
 
 from supabase import create_client, Client
 from typing import Optional, Dict, Any
+from datetime import datetime
+import logging
 from app.config import settings
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -479,3 +484,245 @@ def get_user_stats(user_id: str) -> Dict[str, Any]:
         "average_form_score": average_form_score,
         "best_exercise": best_exercise
     }
+
+
+# ============================================================================
+# VIDEO STORAGE FUNCTIONS (Feature 6)
+# ============================================================================
+
+async def upload_video_to_storage(file_bytes: bytes, filename: str, user_id: str) -> str:
+    """
+    Upload video file to Supabase Storage (PRIVATE bucket).
+    
+    Files are organized by user_id to prevent collisions and enable
+    user-specific access policies.
+    
+    Args:
+        file_bytes: Raw bytes of the video file
+        filename: Original filename with extension
+        user_id: UUID string for namespacing
+        
+    Returns:
+        str: Storage path (NOT a URL - path within the bucket)
+        
+    Raises:
+        HTTPException: If upload fails
+    """
+    from fastapi import HTTPException
+    from datetime import datetime
+    
+    supabase = get_supabase_client()
+    
+    # Generate unique storage path
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_filename = f"{user_id}/{timestamp}_{filename}"
+    
+    try:
+        # Upload to private bucket
+        # Note: file_options values must be strings, not booleans
+        supabase.storage.from_("workout-videos").upload(
+            path=safe_filename,
+            file=file_bytes,
+            file_options={"content-type": "video/mp4"}
+        )
+        
+        logger.info(f"Video uploaded to storage: {safe_filename}")
+        
+        # Return the storage path (not a URL)
+        # We'll generate signed URLs when needed for viewing
+        return safe_filename
+        
+    except Exception as e:
+        logger.error(f"Failed to upload video: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload video to storage: {str(e)}")
+
+
+async def get_video_signed_url(storage_path: str, expires_in: int = 3600) -> str:
+    """
+    Generate a signed URL for accessing a private video file.
+    
+    Signed URLs are temporary and secure - they expire after the specified time.
+    
+    Args:
+        storage_path: Path to the file in storage (e.g., "user_id/timestamp_filename.mp4")
+        expires_in: URL expiration time in seconds (default: 1 hour)
+        
+    Returns:
+        str: Signed URL that can be used to access the video
+    """
+    supabase = get_supabase_client()
+    
+    try:
+        # Generate signed URL
+        result = supabase.storage.from_("workout-videos").create_signed_url(
+            storage_path,
+            expires_in
+        )
+        
+        if result and "signedURL" in result:
+            return result["signedURL"]
+        else:
+            logger.error(f"Failed to generate signed URL for {storage_path}")
+            return ""
+            
+    except Exception as e:
+        logger.error(f"Error generating signed URL: {str(e)}")
+        return ""
+
+
+async def create_session_record(
+    user_id: str,
+    exercise_type: str,
+    session_name: str,
+    video_storage_path: str
+) -> str:
+    """
+    Create a new exercise session record.
+    Status will be set by database default or updated after analysis.
+    
+    Args:
+        user_id: UUID of the user
+        exercise_type: Type of exercise
+        session_name: Human-readable session name
+        video_storage_path: Path to video in storage (NOT a URL)
+        
+    Returns:
+        str: UUID of the created session
+    """
+    supabase = get_supabase_client()
+    
+    session_data = {
+        "user_id": user_id,
+        "exercise_type": exercise_type,
+        "session_name": session_name,
+        "video_url": video_storage_path,  # Store path, not URL
+        "started_at": datetime.now().isoformat()
+        # Don't set status - let database use default or we'll update after analysis
+    }
+    
+    result = supabase.table("exercise_sessions").insert(session_data).execute()
+    
+    if result.data and len(result.data) > 0:
+        return result.data[0]["id"]
+    else:
+        raise Exception("Failed to create session record")
+
+
+async def update_session_after_analysis(
+    session_id: str,
+    form_score: int,
+    performance_rating: str,
+    total_mistakes: int,
+    total_frames_processed: int,
+    duration_seconds: float,
+    exercise_detected: str,
+    status: str = "completed"
+) -> None:
+    """
+    Update session record with analysis results.
+    
+    Args:
+        session_id: UUID of the session
+        form_score: Calculated form score (0-100)
+        performance_rating: Rating from report
+        total_mistakes: Total mistakes detected
+        total_frames_processed: Number of frames analyzed
+        duration_seconds: Session duration
+        exercise_detected: Detected exercise type
+        status: Final status (default: "completed")
+    """
+    supabase = get_supabase_client()
+    
+    update_data = {
+        "form_score": form_score,
+        "performance_rating": performance_rating,
+        "total_mistakes": total_mistakes,
+        "total_frames_processed": total_frames_processed,
+        "duration_seconds": duration_seconds,
+        "exercise_type": exercise_detected,
+        "status": status,
+        "ended_at": datetime.now().isoformat()
+    }
+    
+    try:
+        supabase.table("exercise_sessions").update(update_data).eq("id", session_id).execute()
+        logger.info(f"Session {session_id} updated with analysis results")
+    except Exception as e:
+        logger.error(f"Failed to update session {session_id}: {str(e)}")
+        # Don't raise - report is already saved, session update failing is not critical
+
+
+async def save_report_record(
+    session_id: str,
+    user_id: str,
+    report: dict,
+    exercise_type: str,
+    form_score: int,
+    performance_rating: str,
+    total_mistakes: int
+) -> str:
+    """
+    Save report to database.
+    
+    Args:
+        session_id: UUID of the session
+        user_id: UUID of the user
+        report: Complete report dict from ReportGenerator
+        exercise_type: Type of exercise
+        form_score: Form score (0-100)
+        performance_rating: Performance rating
+        total_mistakes: Total mistakes
+        
+    Returns:
+        str: UUID of the created report
+        
+    Raises:
+        HTTPException: If save fails
+    """
+    from fastapi import HTTPException
+    
+    supabase = get_supabase_client()
+    
+    report_data = {
+        "session_id": session_id,
+        "user_id": user_id,
+        "full_report": report,
+        "exercise_type": exercise_type,
+        "form_score": form_score,
+        "performance_rating": performance_rating,
+        "total_mistakes": total_mistakes
+    }
+    
+    try:
+        result = supabase.table("reports").insert(report_data).execute()
+        
+        if result.data and len(result.data) > 0:
+            return result.data[0]["id"]
+        else:
+            raise Exception("No data returned from insert")
+            
+    except Exception as e:
+        logger.error(f"Failed to save report: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save report")
+
+
+async def get_session_status(session_id: str, user_id: str) -> Optional[dict]:
+    """
+    Get session status for polling.
+    
+    Args:
+        session_id: UUID of the session
+        user_id: UUID of the user (for security)
+        
+    Returns:
+        Dict with session info or None if not found
+    """
+    supabase = get_supabase_client()
+    
+    result = supabase.table("exercise_sessions").select(
+        "id, status, exercise_type, session_name, created_at"
+    ).eq("id", session_id).eq("user_id", user_id).execute()
+    
+    if result.data and len(result.data) > 0:
+        return result.data[0]
+    return None

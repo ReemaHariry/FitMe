@@ -45,10 +45,11 @@ class Settings(BaseSettings):
     # Frontend URLs that are allowed to make requests to this API
     frontend_url: str = "http://localhost:3000"
     frontend_url_alt: str = "http://localhost:5173"
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]  # ADDED for Feature 6
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     
-    # File Upload Configuration (for Feature 6)
-    max_upload_size_mb: int = 100  # ADDED: Maximum video upload size in MB
+    # File Upload Configuration (Feature 6)
+    max_upload_size_mb: int = 500  # Maximum video upload size in MB
+    temp_video_dir: str = "/tmp/fitpose_videos"  # Temporary directory for video processing
 
 
 # Create a single instance of settings that will be imported throughout the app
