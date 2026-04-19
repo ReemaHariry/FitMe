@@ -19,7 +19,9 @@ env/
 ENV/
 env.bak/
 venv.bak/
+gradvenv/
 Ai_fit\ final/Ai_fit/grad/
+backend/gradvenv/
 __pycache__/
 *.py[cod]
 *$py.class

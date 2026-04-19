@@ -44,7 +44,8 @@ export default function Register() {
     setLoading(true)
     setError(null)
     try {
-      await registerUser(data.name, data.email, data.password, data.confirmPassword)
+      await registerUser(data.name, data.email, data.password)
+      // New users always need onboarding
       navigate('/onboarding')
     } catch (error: any) {
       console.error('Registration failed:', error)

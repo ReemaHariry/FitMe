@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Play, Zap, Calendar, TrendingUp, Award, Target } from 'lucide-react'
+import { Play, Zap, Calendar, TrendingUp, Award, Target, Upload } from 'lucide-react'
 import { useI18nStore } from '@/app/i18n'
 import { useAuthStore } from '@/app/store'
 import Button from '@/components/ui/Button'
@@ -11,12 +11,32 @@ import WorkoutCard from '@/components/cards/WorkoutCard'
 import ActivityChart from '@/components/charts/ActivityChart'
 import ProgressChart from '@/components/charts/ProgressChart'
 import StartWorkoutModal from '@/components/modals/StartWorkoutModal'
+// TEMPORARY - REMOVE AFTER VERIFICATION
+import apiClient from '@/api/client'
 
 export default function Dashboard() {
   const { t } = useI18nStore()
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const [showStartModal, setShowStartModal] = useState(false)
+
+  // TEMPORARY - REMOVE AFTER VERIFICATION
+  // Test API connection to backend
+  useEffect(() => {
+    const testApiConnection = async () => {
+      try {
+        console.log('🔍 Testing API connection to backend...')
+        const response = await apiClient.get('/health')
+        console.log('✅ API Connection Successful!')
+        console.log('📦 Response data:', response.data)
+      } catch (error) {
+        console.error('❌ API Connection Failed!')
+        console.error('Error details:', error)
+      }
+    }
+
+    testApiConnection()
+  }, [])
 
   const handleStartWorkout = (workoutData: {
     name: string
@@ -100,6 +120,14 @@ export default function Dashboard() {
             >
               <Play className="w-4 h-4 mr-2" />
               {t('dashboard.startTraining')}
+            </Button>
+            <Button
+              onClick={() => navigate('/upload-video')}
+              variant="outline"
+              className="flex items-center"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Video
             </Button>
           </div>
         </div>

@@ -6,7 +6,8 @@ Uses pydantic-settings to automatically load from .env file and validate types.
 """
 
 from pydantic_settings import BaseSettings
-from typing import Optional
+from pydantic import ConfigDict
+from typing import Optional, List
 
 
 class Settings(BaseSettings):
@@ -15,6 +16,13 @@ class Settings(BaseSettings):
     
     All settings can be overridden by creating a .env file in the backend/ directory.
     """
+    
+    # Pydantic v2 configuration
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        protected_namespaces=()  # Allow model_* field names
+    )
     
     # Supabase Database Configuration
     # Get these from your Supabase project dashboard
@@ -37,13 +45,11 @@ class Settings(BaseSettings):
     # Frontend URLs that are allowed to make requests to this API
     frontend_url: str = "http://localhost:3000"
     frontend_url_alt: str = "http://localhost:5173"
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     
-    class Config:
-        """Pydantic configuration"""
-        # This tells pydantic to look for a .env file in the backend/ directory
-        env_file = ".env"
-        # Case insensitive environment variable names
-        case_sensitive = False
+    # File Upload Configuration (Feature 6)
+    max_upload_size_mb: int = 500  # Maximum video upload size in MB
+    temp_video_dir: str = "/tmp/fitpose_videos"  # Temporary directory for video processing
 
 
 # Create a single instance of settings that will be imported throughout the app

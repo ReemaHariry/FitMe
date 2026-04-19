@@ -12,16 +12,16 @@ supabase==2.3.0
 # File Upload Support
 python-multipart==0.0.6
 
-# AI and Computer Vision
-mediapipe==0.10.9
-tensorflow==2.15.0
-opencv-python==4.9.0.80
+# Basic utilities
 numpy==1.26.3
-scikit-learn==1.4.0
+python-dateutil==2.8.2
 
 # Authentication and Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
-# Additional Utilities
-python-dateutil==2.8.2
+# AI Libraries (Feature 6)
+tensorflow==2.18.0
+mediapipe==0.10.9
+opencv-python==4.10.0.84
+scikit-learn==1.4.0
