@@ -16,6 +16,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { useI18nStore } from '@/app/i18n'
 import * as trainingApi from '../../services/trainingApi'
+import { useVideoUpload } from '@/hooks/useVideoUpload'
 
 interface LiveTrainingState {
   isActive: boolean
@@ -40,6 +41,46 @@ export default function LiveTraining() {
   const frameIntervalRef = useRef<number | null>(null)
   const timerIntervalRef = useRef<number | null>(null)
   const { t } = useI18nStore()
+
+  // Use the shared video upload hook
+  const { uploadVideo, isUploading, uploadProgress } = useVideoUpload({
+    onSuccess: (response) => {
+      console.log('✅ Video analysis complete:', response)
+      
+      // Update state with results
+      setTrainingState(prev => ({
+        ...prev,
+        currentExercise: response.metrics.exercise_detected,
+        confidence: response.metrics.form_score / 100,
+        feedback: [
+          `Exercise: ${response.metrics.exercise_detected}`,
+          `Form Score: ${response.metrics.form_score}%`,
+          `Performance: ${response.metrics.performance_rating}`,
+          `Total Mistakes: ${response.metrics.total_mistakes}`,
+          `Duration: ${Math.floor(response.metrics.duration_seconds)}s`
+        ],
+        timeElapsed: Math.floor(response.metrics.duration_seconds),
+        isProcessing: false,
+        isActive: false,
+      }))
+
+      // Show success and navigate to reports
+      setTimeout(() => {
+        alert('Video analysis completed! Check Reports page for details.')
+        navigate('/reports')
+      }, 2000)
+    },
+    onError: (error) => {
+      console.error('❌ Video upload failed:', error)
+      alert(`Failed to analyze video: ${error.message}`)
+      setTrainingState(prev => ({ 
+        ...prev, 
+        isProcessing: false,
+        currentExercise: 'Waiting...',
+        feedback: []
+      }))
+    }
+  })
 
   const [trainingState, setTrainingState] = useState<LiveTrainingState>({
     isActive: false,
@@ -276,80 +317,12 @@ export default function LiveTraining() {
     }))
 
     try {
-      const response = await trainingApi.uploadVideo(trainingState.uploadedVideo, sessionId)
-      
-      // Use AI-detected exercise name
-      const finalExerciseName = response.exercise
-
-      // Update state with results
-      setTrainingState(prev => ({
-        ...prev,
-        currentExercise: response.exercise,
-        confidence: response.confidence || 0,
-        feedback: response.feedback,
-        timeElapsed: Math.floor(response.duration_seconds),
-        isProcessing: false,
-        isActive: false,
-        sessionName: finalExerciseName
-      }))
-
-      // End session and save report
-      await trainingApi.endSession(sessionId, {
-        duration_seconds: Math.floor(response.duration_seconds),
-        exercise: response.exercise,
-        feedback: response.feedback,
-        confidence: response.confidence
-      })
-
-      // Save to localStorage for reports
-      const report = {
-        id: `report_${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        workoutType: finalExerciseName,
-        duration: Math.max(Math.floor(response.duration_seconds / 60), 1),
-        feedback: response.feedback,
-        detailedFeedback: response.feedback.map((fb, idx) => {
-          // Calculate timestamp based on video duration and feedback count
-          const timePerFeedback = response.duration_seconds / response.feedback.length
-          const timestamp = Math.floor(idx * timePerFeedback)
-          const mins = Math.floor(timestamp / 60)
-          const secs = timestamp % 60
-          
-          return {
-            timestamp: `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`,
-            issue: fb.includes('⚠️') ? 'Form correction needed' : fb.includes('✅') ? 'Good form' : 'Observation',
-            description: fb.replace('⚠️', '').replace('✅', '').trim(),
-            improvement: fb.includes('⚠️') 
-              ? 'Focus on maintaining proper form throughout the movement' 
-              : fb.includes('✅')
-              ? 'Excellent! Keep maintaining this form'
-              : 'Continue with controlled movements'
-          }
-        })
-      }
-
-      const existingReports = JSON.parse(localStorage.getItem('workout-reports') || '[]')
-      existingReports.unshift(report)
-      localStorage.setItem('workout-reports', JSON.stringify(existingReports))
-
-      // Show success message and navigate after a delay
-      setTimeout(() => {
-        alert('Video analysis completed! Check Reports page for details.')
-        navigate('/reports')
-      }, 2000)
+      // Use the shared upload API (same as Dashboard)
+      await uploadVideo(trainingState.uploadedVideo, sessionName)
+      // Success handling is done in the useVideoUpload hook's onSuccess callback
     } catch (error) {
+      // Error handling is done in the useVideoUpload hook's onError callback
       console.error('Video processing error:', error)
-      alert('Failed to process video')
-      setTrainingState(prev => ({ 
-        ...prev, 
-        isProcessing: false,
-        currentExercise: 'Waiting...',
-        feedback: []
-      }))
     }
   }
 
@@ -494,23 +467,13 @@ export default function LiveTraining() {
         <div className="flex items-center space-x-3">
           <Button
             variant="secondary"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => navigate('/upload-video')}
             className="flex items-center"
             disabled={trainingState.isActive}
           >
             <Upload className="w-4 h-4 mr-2" />
             Upload Video
           </Button>
-          {trainingState.mode === 'upload' && (
-            <Button
-              variant="outline"
-              onClick={switchToCamera}
-              className="flex items-center"
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Use Camera
-            </Button>
-          )}
         </div>
       </div>
 
@@ -543,6 +506,17 @@ export default function LiveTraining() {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                         <p className="text-lg">Analyzing Video...</p>
                         <p className="text-sm opacity-75">AI is processing your workout</p>
+                        {uploadProgress > 0 && uploadProgress < 100 && (
+                          <div className="mt-4 w-64 mx-auto">
+                            <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
+                              <div 
+                                className="bg-primary h-full transition-all duration-300"
+                                style={{ width: `${uploadProgress}%` }}
+                              />
+                            </div>
+                            <p className="text-xs mt-2 opacity-75">Uploading: {uploadProgress}%</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

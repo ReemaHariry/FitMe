@@ -38,8 +38,7 @@ Full-stack AI-powered fitness training application with real-time form correctio
 ```bash
 cd backend
 python -m venv venv
-gradvenv\Scripts\activate          # Windows
-source venv/bin/activate       # Mac/Linux
+gradvenv\Scripts\activate        
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
