@@ -214,8 +214,6 @@ def get_user_reports(user_id: str) -> list:
             "id, session_id, exercise_type, form_score, performance_rating, total_mistakes, generated_at"
         ).eq("user_id", user_id).order("generated_at", desc=True).execute()
         
-        print(f"DEBUG: Reports result: {reports_result.data}")
-        
         # Then, for each report, get the session details
         reports = []
         for report in reports_result.data:
@@ -241,7 +239,6 @@ def get_user_reports(user_id: str) -> list:
                 "created_at": report["generated_at"]  # Use generated_at for created_at
             })
         
-        print(f"DEBUG: Final reports: {reports}")
         return reports
         
     except Exception as e:

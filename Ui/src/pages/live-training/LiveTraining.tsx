@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -10,447 +9,54 @@ import {
   Timer,
   Zap,
   Upload,
-  Video
+  AlertCircle
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { useI18nStore } from '@/app/i18n'
-import * as trainingApi from '../../services/trainingApi'
-import { useVideoUpload } from '@/hooks/useVideoUpload'
-
-interface LiveTrainingState {
-  isActive: boolean
-  currentExercise: string
-  confidence: number
-  timeElapsed: number
-  feedback: string[]
-  cameraEnabled: boolean
-  cameraStream: MediaStream | null
-  sessionId: string | null
-  sessionName: string
-  mode: 'camera' | 'upload'
-  uploadedVideo: File | null
-  isProcessing: boolean
-}
+import { useLiveSession } from '@/hooks/useLiveSession'
 
 export default function LiveTraining() {
   const navigate = useNavigate()
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const frameIntervalRef = useRef<number | null>(null)
-  const timerIntervalRef = useRef<number | null>(null)
   const { t } = useI18nStore()
+  
+  // Main live session hook - manages everything
+  const {
+    phase,
+    feedback,
+    formattedTime,
+    isConnected,
+    videoRef,
+    startSession,
+    endSession,
+    errorMessage,
+    reset
+  } = useLiveSession()
 
-  // Use the shared video upload hook
-  const { uploadVideo, isUploading, uploadProgress } = useVideoUpload({
-    onSuccess: (response) => {
-      console.log('✅ Video analysis complete:', response)
-      
-      // Update state with results
-      setTrainingState(prev => ({
-        ...prev,
-        currentExercise: response.metrics.exercise_detected,
-        confidence: response.metrics.form_score / 100,
-        feedback: [
-          `Exercise: ${response.metrics.exercise_detected}`,
-          `Form Score: ${response.metrics.form_score}%`,
-          `Performance: ${response.metrics.performance_rating}`,
-          `Total Mistakes: ${response.metrics.total_mistakes}`,
-          `Duration: ${Math.floor(response.metrics.duration_seconds)}s`
-        ],
-        timeElapsed: Math.floor(response.metrics.duration_seconds),
-        isProcessing: false,
-        isActive: false,
-      }))
+  // No exercise selection needed - AI will detect it automatically
+  // We'll use "unknown" as placeholder and let AI detect the actual exercise
 
-      // Show success and navigate to reports
-      setTimeout(() => {
-        alert('Video analysis completed! Check Reports page for details.')
-        navigate('/reports')
-      }, 2000)
-    },
-    onError: (error) => {
-      console.error('❌ Video upload failed:', error)
-      alert(`Failed to analyze video: ${error.message}`)
-      setTrainingState(prev => ({ 
-        ...prev, 
-        isProcessing: false,
-        currentExercise: 'Waiting...',
-        feedback: []
-      }))
-    }
-  })
+  // Status text based on phase
+  const statusText = {
+    'idle': 'Waiting...',
+    'starting': 'Starting camera...',
+    'active': feedback.status === 'buffering'
+      ? `Detecting... (${feedback.bufferProgress}/50)`
+      : feedback.status === 'analyzing'
+      ? feedback.exercise
+        ? `${feedback.exercise.replace('_', ' ')} detected`
+        : 'Analyzing...'
+      : 'Detecting pose...',
+    'ending': 'Generating report...',
+    'error': 'Error occurred'
+  }[phase]
 
-  const [trainingState, setTrainingState] = useState<LiveTrainingState>({
-    isActive: false,
-    currentExercise: 'Waiting...',
-    confidence: 0,
-    timeElapsed: 0,
-    feedback: [],
-    cameraEnabled: false,
-    cameraStream: null,
-    sessionId: null,
-    sessionName: '',
-    mode: 'camera',
-    uploadedVideo: null,
-    isProcessing: false,
-  })
-
-  const [countdown, setCountdown] = useState<number | null>(null)
-  const [showNameModal, setShowNameModal] = useState(false)
-  const [tempSessionName, setTempSessionName] = useState('')
-
-  // Camera functionality
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-        audio: false
-      })
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
-
-      setTrainingState(prev => ({
-        ...prev,
-        cameraStream: stream,
-        cameraEnabled: true
-      }))
-    } catch (error) {
-      console.error('Error accessing camera:', error)
-      alert('Failed to access camera. Please check permissions.')
-    }
-  }
-
-  const stopCamera = () => {
-    if (trainingState.cameraStream) {
-      trainingState.cameraStream.getTracks().forEach(track => track.stop())
-      setTrainingState(prev => ({
-        ...prev,
-        cameraStream: null,
-        cameraEnabled: false
-      }))
-    }
-  }
-
-  // Auto-start camera on mount (only if no video uploaded)
-  useEffect(() => {
-    if (!trainingState.uploadedVideo) {
-      startCamera()
-    }
-  }, [])
-
-  // Cleanup camera on unmount
-  useEffect(() => {
-    return () => {
-      if (trainingState.cameraStream) {
-        trainingState.cameraStream.getTracks().forEach(track => track.stop())
-      }
-      if (frameIntervalRef.current) {
-        clearInterval(frameIntervalRef.current)
-      }
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current)
-      }
-    }
-  }, [trainingState.cameraStream])
-
-  // Timer
-  useEffect(() => {
-    if (trainingState.isActive) {
-      timerIntervalRef.current = window.setInterval(() => {
-        setTrainingState(prev => ({
-          ...prev,
-          timeElapsed: prev.timeElapsed + 1
-        }))
-      }, 1000)
-    } else {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current)
-        timerIntervalRef.current = null
-      }
-    }
-
-    return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current)
-      }
-    }
-  }, [trainingState.isActive])
-
-  const captureFrame = (): string | null => {
-    if (!videoRef.current || !canvasRef.current) return null
-
-    const video = videoRef.current
-    const canvas = canvasRef.current
-
-    if (video.readyState !== video.HAVE_ENOUGH_DATA) return null
-
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    return canvas.toDataURL('image/jpeg', 0.7)
-  }
-
-  const sendFrameToAI = async (sid: string) => {
-    const frame = captureFrame()
-    if (!frame) return
-
-    try {
-      const response = await trainingApi.sendFrame(frame, sid)
-      
-      setTrainingState(prev => ({
-        ...prev,
-        currentExercise: response.exercise,
-        confidence: response.confidence || 0,
-        feedback: response.feedback
-      }))
-    } catch (error) {
-      console.error('Frame processing error:', error)
-    }
-  }
-
-  const startTraining = async () => {
-    if (!trainingState.cameraEnabled && trainingState.mode === 'camera') {
-      await startCamera()
-      return
-    }
-
-    // For video upload mode, skip name modal and process directly
-    if (trainingState.mode === 'upload' && trainingState.uploadedVideo) {
-      try {
-        // Start session
-        const sessionResponse = await trainingApi.startSession({
-          user_id: 'mock-user-id',
-          mode: 'upload'
-        })
-
-        setTrainingState(prev => ({
-          ...prev,
-          sessionId: sessionResponse.session_id
-        }))
-
-        await processUploadedVideo(sessionResponse.session_id, 'AI-Detected Exercise')
-      } catch (error) {
-        console.error('Failed to start video analysis:', error)
-        alert('Failed to analyze video')
-      }
-      return
-    }
-
-    // For camera mode, show name modal
-    setShowNameModal(true)
-  }
-
-  const confirmStartTraining = async () => {
-    setShowNameModal(false)
-    
-    // Use AI-detected exercise name if user didn't provide one
-    const sessionName = tempSessionName.trim() || 'AI-Detected Exercise'
-    
-    setTrainingState(prev => ({
-      ...prev,
-      sessionName: sessionName
-    }))
-
-    try {
-      // Start session
-      const sessionResponse = await trainingApi.startSession({
-        user_id: 'mock-user-id',
-        mode: trainingState.mode
-      })
-
-      // Capture session_id directly from response
-      const sid = sessionResponse.session_id
-
-      setTrainingState(prev => ({
-        ...prev,
-        sessionId: sid
-      }))
-
-      // If upload mode, process video immediately
-      if (trainingState.mode === 'upload' && trainingState.uploadedVideo) {
-        await processUploadedVideo(sid, sessionName)
-        return
-      }
-
-      // Camera mode: Start countdown
-      setCountdown(3)
-      const countdownInterval = setInterval(() => {
-        setCountdown(prev => {
-          if (prev === 1) {
-            clearInterval(countdownInterval)
-            
-            // Start training
-            setTrainingState(prev => ({ ...prev, isActive: true }))
-            
-            // Start frame capture every 2 seconds - pass sid directly
-            frameIntervalRef.current = window.setInterval(() => {
-              sendFrameToAI(sid)
-            }, 2000)
-            
-            return null
-          }
-          return prev ? prev - 1 : null
-        })
-      }, 1000)
-    } catch (error) {
-      console.error('Failed to start training:', error)
-      alert('Failed to start training session')
-    }
-  }
-
-  const processUploadedVideo = async (sessionId: string, sessionName: string) => {
-    if (!trainingState.uploadedVideo) return
-
-    setTrainingState(prev => ({ 
-      ...prev, 
-      isProcessing: true,
-      currentExercise: 'Analyzing...',
-      feedback: ['Processing video...']
-    }))
-
-    try {
-      // Use the shared upload API (same as Dashboard)
-      await uploadVideo(trainingState.uploadedVideo, sessionName)
-      // Success handling is done in the useVideoUpload hook's onSuccess callback
-    } catch (error) {
-      // Error handling is done in the useVideoUpload hook's onError callback
-      console.error('Video processing error:', error)
-    }
-  }
-
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file && file.type.startsWith('video/')) {
-      // Stop camera if running
-      if (trainingState.cameraStream) {
-        trainingState.cameraStream.getTracks().forEach(track => track.stop())
-      }
-
-      setTrainingState(prev => ({
-        ...prev,
-        uploadedVideo: file,
-        mode: 'upload',
-        cameraEnabled: false,
-        cameraStream: null
-      }))
-
-      // Load video preview
-      if (videoRef.current) {
-        // Clear any existing srcObject (camera stream)
-        videoRef.current.srcObject = null
-        
-        const videoUrl = URL.createObjectURL(file)
-        videoRef.current.src = videoUrl
-        videoRef.current.load()
-        
-        // Play video once loaded
-        videoRef.current.onloadeddata = () => {
-          videoRef.current?.play()
-        }
-      }
-    }
-  }
-
-  const switchToCamera = () => {
-    // Clear uploaded video
-    if (videoRef.current) {
-      videoRef.current.src = ''
-      videoRef.current.load()
-    }
-
-    setTrainingState(prev => ({
-      ...prev,
-      mode: 'camera',
-      uploadedVideo: null
-    }))
-    
-    startCamera()
-  }
-
-  const stopTraining = async () => {
-    // Stop frame capture
-    if (frameIntervalRef.current) {
-      clearInterval(frameIntervalRef.current)
-      frameIntervalRef.current = null
-    }
-
-    // Stop camera
-    stopCamera()
-
-    // End session
-    if (trainingState.sessionId) {
-      try {
-        await trainingApi.endSession(trainingState.sessionId, {
-          duration_seconds: trainingState.timeElapsed,
-          exercise: trainingState.currentExercise,
-          feedback: trainingState.feedback,
-          confidence: trainingState.confidence
-        })
-
-        // Save to localStorage for reports
-        const report = {
-          id: `report_${Date.now()}`,
-          date: new Date().toISOString().split('T')[0],
-          time: new Date().toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
-          workoutType: trainingState.sessionName || trainingState.currentExercise,
-          duration: Math.max(Math.floor(trainingState.timeElapsed / 60), 1),
-          feedback: trainingState.feedback,
-          detailedFeedback: trainingState.feedback.map((fb, idx) => {
-            // Calculate timestamp based on elapsed time and feedback count
-            const timePerFeedback = trainingState.timeElapsed / trainingState.feedback.length
-            const timestamp = Math.floor(idx * timePerFeedback)
-            const mins = Math.floor(timestamp / 60)
-            const secs = timestamp % 60
-            
-            return {
-              timestamp: `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`,
-              issue: fb.includes('⚠️') ? 'Form correction needed' : fb.includes('✅') ? 'Good form' : 'Observation',
-              description: fb.replace('⚠️', '').replace('✅', '').trim(),
-              improvement: fb.includes('⚠️') 
-                ? 'Focus on maintaining proper form throughout the movement' 
-                : fb.includes('✅')
-                ? 'Excellent! Keep maintaining this form'
-                : 'Continue with controlled movements'
-            }
-          })
-        }
-
-        const existingReports = JSON.parse(localStorage.getItem('workout-reports') || '[]')
-        existingReports.unshift(report)
-        localStorage.setItem('workout-reports', JSON.stringify(existingReports))
-
-        alert('Training session completed! Check Reports page for details.')
-        navigate('/reports')
-      } catch (error) {
-        console.error('Failed to end session:', error)
-      }
-    }
-
-    setTrainingState(prev => ({
-      ...prev,
-      isActive: false,
-      timeElapsed: 0,
-      sessionId: null
-    }))
-  }
-
-  const formatTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600)
-    const mins = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
+  // Feedback message color based on form status
+  const feedbackColorClass = feedback.formStatus === 'good'
+    ? 'text-green-600 dark:text-green-400'
+    : feedback.formStatus === 'bad'
+    ? 'text-red-600 dark:text-red-400'
+    : 'text-primary'
 
   return (
     <div className="space-y-6">
@@ -469,7 +75,7 @@ export default function LiveTraining() {
             variant="secondary"
             onClick={() => navigate('/upload-video')}
             className="flex items-center"
-            disabled={trainingState.isActive}
+            disabled={phase === 'active' || phase === 'starting' || phase === 'ending'}
           >
             <Upload className="w-4 h-4 mr-2" />
             Upload Video
@@ -477,157 +83,118 @@ export default function LiveTraining() {
         </div>
       </div>
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="video/*"
-        onChange={handleVideoUpload}
-        className="hidden"
-      />
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Video Area */}
         <div className="lg:col-span-2">
           <Card className="relative overflow-hidden">
             {/* Video Feed */}
             <div className="aspect-video bg-gray-900 rounded-xl relative overflow-hidden">
-              {trainingState.mode === 'upload' && trainingState.uploadedVideo ? (
+              {/* Video element - always present but hidden when not needed */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`w-full h-full object-cover absolute inset-0 ${
+                  phase === 'active' || phase === 'ending' || phase === 'starting' ? 'block' : 'hidden'
+                }`}
+              />
+              
+              {/* Active/Ending/Starting State */}
+              {(phase === 'active' || phase === 'ending' || phase === 'starting') && (
                 <div className="w-full h-full relative">
-                  <video
-                    ref={videoRef}
-                    controls
-                    loop
-                    className="w-full h-full object-contain bg-black"
-                  />
-                  {trainingState.isProcessing && (
-                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p className="text-lg">Analyzing Video...</p>
-                        <p className="text-sm opacity-75">AI is processing your workout</p>
-                        {uploadProgress > 0 && uploadProgress < 100 && (
-                          <div className="mt-4 w-64 mx-auto">
-                            <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
-                              <div 
-                                className="bg-primary h-full transition-all duration-300"
-                                style={{ width: `${uploadProgress}%` }}
-                              />
-                            </div>
-                            <p className="text-xs mt-2 opacity-75">Uploading: {uploadProgress}%</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute top-4 left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
-                    <Video className="w-4 h-4 mr-2" />
-                    {trainingState.uploadedVideo.name}
-                  </div>
-                </div>
-              ) : trainingState.cameraEnabled && trainingState.cameraStream ? (
-                <div className="w-full h-full relative">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                  {trainingState.isActive && (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                  {phase === 'active' && (
+                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center z-10">
                       <span className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
                       LIVE
                     </div>
                   )}
+                  {!isConnected && phase === 'active' && (
+                    <div className="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
+                      Connecting...
+                    </div>
+                  )}
+                  {phase === 'starting' && (
+                    <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10">
+                      <div className="text-center text-white">
+                        <Camera className="w-16 h-16 mx-auto mb-4 animate-pulse" />
+                        <p className="text-lg">Starting camera...</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
+              )}
+              
+              {/* Idle/Error State */}
+              {(phase === 'idle' || phase === 'error') && (
                 <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                   <div className="text-center text-gray-400">
-                    <CameraOff className="w-16 h-16 mx-auto mb-4" />
-                    <p className="text-lg mb-4">Camera Disabled</p>
-                    <div className="space-y-2">
-                      <Button
-                        onClick={startCamera}
-                        variant="secondary"
-                        className="flex items-center mx-auto"
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Enable Camera
-                      </Button>
-                      <p className="text-sm">or</p>
-                      <Button
-                        onClick={() => fileInputRef.current?.click()}
-                        variant="secondary"
-                        className="flex items-center mx-auto"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Video
-                      </Button>
-                    </div>
+                    {phase === 'error' ? (
+                      <>
+                        <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
+                        <p className="text-lg mb-4 text-red-400">{errorMessage}</p>
+                        <Button
+                          onClick={reset}
+                          variant="secondary"
+                          className="mx-auto"
+                        >
+                          Try Again
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <CameraOff className="w-16 h-16 mx-auto mb-4" />
+                        <p className="text-lg mb-4">Camera Ready</p>
+                        <p className="text-sm mb-4">Click Start Training and the AI will detect your exercise automatically</p>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Countdown Overlay */}
-              <AnimatePresence>
-                {countdown && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    className="absolute inset-0 bg-black/50 flex items-center justify-center"
-                  >
-                    <div className="text-8xl font-bold text-white">
-                      {countdown}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Controls Overlay */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center">
-                {!trainingState.isActive && !trainingState.isProcessing ? (
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center z-20">
+                {phase === 'idle' ? (
                   <Button 
-                    onClick={startTraining} 
+                    onClick={() => startSession('unknown')}
                     className="flex items-center"
-                    disabled={!trainingState.cameraEnabled && !trainingState.uploadedVideo}
                   >
                     <Play className="w-4 h-4 mr-2" />
-                    {trainingState.mode === 'upload' ? 'Analyze Video' : 'Start Training'}
+                    Start Training
                   </Button>
-                ) : trainingState.isActive ? (
+                ) : phase === 'active' ? (
                   <Button
-                    onClick={stopTraining}
+                    onClick={endSession}
                     variant="outline"
                     className="flex items-center bg-red-500 hover:bg-red-600 text-white border-red-500"
                   >
                     <Square className="w-4 h-4 mr-2" />
                     End Training
                   </Button>
+                ) : phase === 'ending' ? (
+                  <div className="text-white text-sm">
+                    Generating report...
+                  </div>
                 ) : null}
               </div>
             </div>
           </Card>
-          
-          {/* Hidden canvas for frame capture */}
-          <canvas ref={canvasRef} className="hidden" />
         </div>
 
         {/* Stats and Feedback Panel */}
         <div className="space-y-6">
-          {/* Current Exercise */}
+          {/* Status Box */}
           <Card>
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Target className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {trainingState.currentExercise}
+                {statusText}
               </h3>
-              {trainingState.confidence > 0 && (
+              {feedback.confidence !== null && feedback.confidence > 0 && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Confidence: {Math.round(trainingState.confidence * 100)}%
+                  Confidence: {Math.round(feedback.confidence * 100)}%
                 </p>
               )}
             </div>
@@ -644,7 +211,7 @@ export default function LiveTraining() {
                 <span className="text-sm text-gray-600 dark:text-gray-400">Time</span>
               </div>
               <span className="font-mono text-lg font-semibold text-gray-900 dark:text-white">
-                {formatTime(trainingState.timeElapsed)}
+                {formattedTime}
               </span>
             </div>
           </Card>
@@ -656,23 +223,46 @@ export default function LiveTraining() {
             </h3>
 
             <div className="space-y-3 max-h-64 overflow-y-auto">
-              <AnimatePresence>
-                {trainingState.feedback.map((feedback, index) => (
+              {phase === 'idle' || phase === 'starting' ? (
+                <div className="text-center py-8">
+                  <Zap className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    AI feedback will appear here
+                  </p>
+                </div>
+              ) : phase === 'active' ? (
+                <AnimatePresence>
                   <motion.div
-                    key={`${feedback}-${index}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     className="p-3 bg-primary/10 rounded-xl"
                   >
-                    <p className="text-sm text-primary font-medium">
-                      {feedback}
+                    <p className={`text-sm font-medium ${feedbackColorClass}`}>
+                      {feedback.message}
                     </p>
+                    {feedback.mistakesCount > 0 && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        Mistakes detected: {feedback.mistakesCount}
+                      </p>
+                    )}
                   </motion.div>
-                ))}
-              </AnimatePresence>
-
-              {trainingState.feedback.length === 0 && (
+                </AnimatePresence>
+              ) : phase === 'ending' ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Generating your report...
+                  </p>
+                </div>
+              ) : phase === 'error' ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                  <p className="text-sm text-red-500">
+                    {errorMessage || 'An error occurred'}
+                  </p>
+                </div>
+              ) : (
                 <div className="text-center py-8">
                   <Zap className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -684,65 +274,6 @@ export default function LiveTraining() {
           </Card>
         </div>
       </div>
-
-      {/* Session Name Modal */}
-      <AnimatePresence>
-        {showNameModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowNameModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full"
-            >
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                Name Your Workout
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Give this training session a name (optional - AI will detect exercise type)
-              </p>
-              
-              <input
-                type="text"
-                value={tempSessionName}
-                onChange={(e) => setTempSessionName(e.target.value)}
-                placeholder="e.g., Morning Workout, Leg Day (leave empty for AI detection)"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary mb-6"
-                autoFocus
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    confirmStartTraining()
-                  }
-                }}
-              />
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => setShowNameModal(false)}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={confirmStartTraining}
-                  variant="primary"
-                  className="flex-1"
-                >
-                  {trainingState.mode === 'upload' ? 'Analyze Video' : 'Start Training'}
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

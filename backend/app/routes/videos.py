@@ -259,8 +259,8 @@ async def upload_video(
                     exercise_detected="unknown",
                     status="failed"
                 )
-            except:
-                pass
+            except Exception as cleanup_error:
+                logger.error(f"Failed to create error report: {cleanup_error}")
         
         # Return error to client
         raise HTTPException(

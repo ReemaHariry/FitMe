@@ -82,7 +82,12 @@ def analyze_video(
     
     video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total_video_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+    # Calculate actual video duration from video properties (not processing time)
+    actual_video_duration = total_video_frames / video_fps if video_fps > 0 else 0
+    
     logger.info(f"Video opened: {total_video_frames} frames at {video_fps} FPS")
+    logger.info(f"Actual video duration: {actual_video_duration:.2f} seconds")
     
     # Analysis constants
     CONFIDENCE_THRESHOLD = 0.70
@@ -228,6 +233,9 @@ def analyze_video(
     
     # Override exercise_detected with our determined type
     session_data["exercise_detected"] = exercise_type
+    
+    # Override duration with actual video duration (not processing time)
+    session_data["duration_seconds"] = actual_video_duration
     
     # Generate report
     report = ReportGenerator.generate_report(session_data)

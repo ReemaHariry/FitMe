@@ -1,0 +1,293 @@
+"""
+Sessions Routes
+
+Handles live training session lifecycle management.
+POST /sessions/start — creates session in memory AND in database
+POST /sessions/{id}/end — ends session, generates report, saves to DB
+"""
+
+from fastapi import APIRouter, HTTPException, Depends, status
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
+from datetime import datetime
+import logging
+
+from app.services import session_service
+from app.services.supabase_service import get_supabase_client
+from app.reports.report_generator import ReportGenerator
+from app.ai.pose_utils import calculate_form_score
+from app.routes.users import get_current_user
+
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# PYDANTIC MODELS
+# ============================================================================
+
+class StartSessionRequest(BaseModel):
+    """Request body for starting a live session"""
+    exercise_name: str
+    session_name: Optional[str] = None
+
+
+class StartSessionResponse(BaseModel):
+    """Response from starting a live session"""
+    session_id: str
+    message: str
+    websocket_url: str
+
+
+class EndSessionRequest(BaseModel):
+    """Request body for ending a live session"""
+    exercise_name: str
+    session_name: Optional[str] = None
+
+
+class EndSessionResponse(BaseModel):
+    """Response from ending a live session"""
+    session_id: str
+    report_id: str
+    message: str
+    report: Dict[str, Any]
+    metrics: Dict[str, Any]
+
+
+# ============================================================================
+# ROUTER SETUP
+# ============================================================================
+
+router = APIRouter(
+    # prefix="/sessions",  # ← REMOVED: prefix is set in main.py
+    tags=["Sessions"]
+)
+
+
+# ============================================================================
+# ENDPOINT: POST /sessions/start
+# ============================================================================
+
+@router.post("/start", response_model=StartSessionResponse)
+async def start_session(
+    request: StartSessionRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Start a new live training session.
+    
+    Process:
+    1. Validate exercise_name
+    2. Generate session_name if None
+    3. Create session in memory (session_service)
+    4. Insert into exercise_sessions table with status='processing'
+    5. Return session_id and websocket_url
+    
+    The session_id returned here is used by React to:
+    - Open the WebSocket connection
+    - Call POST /sessions/{id}/end
+    
+    Args:
+        request: StartSessionRequest with exercise_name and optional session_name
+        current_user: Current authenticated user from token
+        
+    Returns:
+        StartSessionResponse with session_id and websocket_url
+        
+    Raises:
+        400: Invalid exercise_name
+        500: Failed to create session
+    """
+    try:
+        user_id = current_user["id"]
+        
+        # Validate exercise_name (allow "unknown" for AI auto-detection)
+        valid_exercises = ["squat", "push_up", "sit_up", "pushup", "situp", "unknown"]
+        exercise_normalized = request.exercise_name.lower().replace("-", "_").replace(" ", "_")
+        
+        if exercise_normalized not in valid_exercises:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid exercise_name. Must be one of: {', '.join(valid_exercises)}"
+            )
+        
+        # Generate session_name if None
+        if not request.session_name:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            session_name = f"{request.exercise_name.replace('_', ' ').title()} Live Session - {timestamp}"
+        else:
+            session_name = request.session_name
+        
+        # Create session in memory
+        session_id, tracker = session_service.create_live_session(
+            user_id=user_id,
+            session_name=session_name
+        )
+        
+        # Insert into database with status='processing' (live session in progress)
+        supabase = get_supabase_client()
+        
+        session_data = {
+            "id": session_id,  # Use the same UUID from memory
+            "user_id": user_id,
+            "exercise_type": request.exercise_name,
+            "session_name": session_name,
+            "video_url": None,  # NULL for live sessions
+            "status": "processing",  # ← CHANGED from 'active' to 'processing'
+            "started_at": datetime.now().isoformat()
+        }
+        
+        result = supabase.table("exercise_sessions").insert(session_data).execute()
+        
+        if not result.data:
+            raise Exception("Failed to create session record in database")
+        
+        logger.info(f"Live session started: {session_id} for user {user_id}")
+        
+        return StartSessionResponse(
+            session_id=session_id,
+            message="Session started successfully",
+            websocket_url=f"/ws/live/{session_id}"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to start session: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start session: {str(e)}"
+        )
+
+
+# ============================================================================
+# ENDPOINT: POST /sessions/{session_id}/end
+# ============================================================================
+
+@router.post("/{session_id}/end", response_model=EndSessionResponse)
+async def end_session(
+    session_id: str,
+    request: EndSessionRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    End a live training session and generate report.
+    
+    Process:
+    1. Validate current_user
+    2. Call session_service.end_live_session(session_id)
+    3. Generate report with ReportGenerator
+    4. Calculate form_score
+    5. Save report to database
+    6. Update exercise_sessions row with results
+    7. Return complete report and metrics
+    
+    Args:
+        session_id: UUID of the session (from URL path)
+        request: EndSessionRequest with exercise_name and session_name
+        current_user: Current authenticated user from token
+        
+    Returns:
+        EndSessionResponse with full report and metrics
+        
+    Raises:
+        404: Session not found or already ended
+        500: Failed to generate or save report
+    """
+    try:
+        user_id = current_user["id"]
+        
+        # End session in memory and get tracker
+        tracker = session_service.end_live_session(session_id)
+        
+        if tracker is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found or already ended"
+            )
+        
+        # Generate report
+        session_data = tracker.get_session_summary()
+        report = ReportGenerator.generate_report(session_data)
+        
+        # Calculate form_score
+        form_score = calculate_form_score(
+            report,
+            session_data["total_frames_processed"]
+        )
+        
+        # Extract metrics
+        performance_rating = report["overall_summary"]["performance_rating"]
+        total_mistakes = report["statistics"]["total_mistakes"]
+        duration_seconds = session_data["duration_seconds"]
+        # Use detected exercise or fall back to requested exercise name
+        exercise_detected = session_data.get("exercise_detected") or request.exercise_name
+        
+        # Save report to database
+        supabase = get_supabase_client()
+        
+        report_data = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "full_report": report,
+            "exercise_type": exercise_detected,
+            "form_score": form_score,
+            "performance_rating": performance_rating,
+            "total_mistakes": total_mistakes
+        }
+        
+        report_result = supabase.table("reports").insert(report_data).execute()
+        
+        if not report_result.data:
+            raise Exception("Failed to save report to database")
+        
+        report_id = report_result.data[0]["id"]
+        
+        # Update exercise_sessions row
+        update_data = {
+            "form_score": form_score,
+            "performance_rating": performance_rating,
+            "total_mistakes": total_mistakes,
+            "total_frames_processed": session_data["total_frames_processed"],
+            "duration_seconds": duration_seconds,
+            "exercise_type": exercise_detected,
+            "status": "completed",
+            "ended_at": datetime.now().isoformat()
+        }
+        
+        supabase.table("exercise_sessions").update(update_data).eq("id", session_id).execute()
+        
+        logger.info(f"Live session ended and report generated: {session_id} -> {report_id}")
+        
+        return EndSessionResponse(
+            session_id=session_id,
+            report_id=report_id,
+            message="Session ended and report generated successfully",
+            report=report,
+            metrics={
+                "form_score": form_score,
+                "performance_rating": performance_rating,
+                "total_mistakes": total_mistakes,
+                "duration_seconds": duration_seconds,
+                "total_frames_processed": session_data["total_frames_processed"],
+                "exercise_detected": exercise_detected
+            }
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to end session {session_id}: {e}", exc_info=True)
+        
+        # Attempt to update session status to 'failed' in DB
+        try:
+            supabase = get_supabase_client()
+            supabase.table("exercise_sessions").update({
+                "status": "failed",
+                "ended_at": datetime.now().isoformat()
+            }).eq("id", session_id).execute()
+        except Exception:
+            pass
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to end session: {str(e)}"
+        )

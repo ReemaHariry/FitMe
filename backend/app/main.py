@@ -7,7 +7,7 @@ This is the core FastAPI application that handles all HTTP requests.
 import os
 import numpy as np
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import settings
@@ -17,7 +17,8 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TensorFlow warnings
 os.environ["MEDIAPIPE_DISABLE_GPU"] = "1"  # Use CPU only
 
 # Import routers
-from app.routes import auth, users, reports, videos
+from app.routes import auth, users, reports, videos, sessions
+from app.websockets.live_handler import handle_live_session
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -122,6 +123,9 @@ app.include_router(reports.router)
 # Include video upload routes
 app.include_router(videos.router, prefix="/videos", tags=["videos"])
 
+# Include live session routes
+app.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
+
 
 # ============================================================================
 # HEALTH CHECK ENDPOINT
@@ -138,12 +142,15 @@ async def health_check():
     Returns:
         dict: Status message confirming API is operational
     """
+    from app.services.session_service import get_active_session_count
+    
     return {
         "status": "ok",
         "message": "AI Fitness Trainer API is running",
         "version": "1.0.0",
         "environment": settings.environment,
-        "model_loaded": app.state.model_loaded if hasattr(app.state, 'model_loaded') else False
+        "model_loaded": app.state.model_loaded if hasattr(app.state, 'model_loaded') else False,
+        "active_live_sessions": get_active_session_count()
     }
 
 
@@ -175,3 +182,22 @@ async def root():
 # app.include_router(auth.router)
 # app.include_router(workouts.router)
 # app.include_router(ai_inference.router)
+
+
+# ============================================================================
+# WEBSOCKET ENDPOINT
+# ============================================================================
+
+@app.websocket("/ws/live/{session_id}")
+async def websocket_live(websocket: WebSocket, session_id: str):
+    """
+    WebSocket endpoint for live training sessions.
+    
+    React connects here after calling POST /sessions/start.
+    Streams frames and receives real-time feedback.
+    
+    Args:
+        websocket: WebSocket connection
+        session_id: UUID of the session
+    """
+    await handle_live_session(websocket, session_id)

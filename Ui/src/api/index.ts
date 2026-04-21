@@ -24,5 +24,9 @@ export * from './users'
 
 // Export all reports-related functions and types
 export * from './reports'
+
 // Export all videos-related functions and types
 export * from './videos'
+
+// Export all sessions-related functions and types
+export * from './sessions'
