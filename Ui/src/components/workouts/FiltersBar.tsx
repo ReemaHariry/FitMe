@@ -7,9 +7,9 @@ import { Search, ChevronDown } from "lucide-react";
 import {
   MuscleGroup,
   DifficultyLevel,
-  InjuryMode,
   FilterState,
 } from "../../types/workout.types";
+import { InjuryType, getInjuryOptions } from "../../data/injuryData";
 
 interface FiltersBarProps {
   filters: FilterState;
@@ -47,9 +47,11 @@ export function FiltersBar({ filters, onFiltersChange }: FiltersBarProps) {
     onFiltersChange({ ...filters, difficulty: value });
   };
 
-  const handleInjuryModeChange = (value: InjuryMode) => {
+  const handleInjuryModeChange = (value: InjuryType) => {
     onFiltersChange({ ...filters, injuryMode: value });
   };
+
+  const injuryOptions = getInjuryOptions();
 
   return (
     <div className="card space-y-6">
@@ -139,13 +141,14 @@ export function FiltersBar({ filters, onFiltersChange }: FiltersBarProps) {
           <div className="relative">
             <select
               value={filters.injuryMode}
-              onChange={(e) => handleInjuryModeChange(e.target.value as InjuryMode)}
+              onChange={(e) => handleInjuryModeChange(e.target.value as InjuryType)}
               className="input appearance-none pr-10"
             >
-              <option value="none">No Injury</option>
-              <option value="knee">Knee Injury</option>
-              <option value="back">Back Injury</option>
-              <option value="shoulder">Shoulder Injury</option>
+              {injuryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
           </div>

@@ -1,22 +1,22 @@
 /**
  * Workout Filtering Hook
- * Composable filter logic using Strategy Pattern
+ * Pure client-side filtering with no external dependencies
  */
 
 import { useMemo } from "react";
-import { Workout, FilterState } from "../types/workout.types";
-import { adaptWorkoutForInjury } from "../utils/injuryAdapter";
+import { Workout, FilterState, SmartWorkout } from "../types/workout.types";
+import { InjuryType, isExerciseSafeForInjury } from "../data/injuryData";
 
 /**
  * Filters workouts based on current filter state
  * @param workouts - Array of all workouts
  * @param filters - Current filter state
- * @returns Filtered and adapted workouts
+ * @returns Filtered workouts
  */
 export function useWorkoutFilters(
   workouts: Workout[],
   filters: FilterState
-): Workout[] {
+): Workout[] | SmartWorkout[] {
   return useMemo(() => {
     let filtered = [...workouts];
 
@@ -46,11 +46,25 @@ export function useWorkoutFilters(
       );
     }
 
-    // Injury adaptation: replace exercises with safe alternatives
+    // Injury filter: filter out workouts with unsafe exercises
+    // The smart engine will handle exercise replacements
     if (filters.injuryMode !== "none") {
-      filtered = filtered.map((workout) =>
-        adaptWorkoutForInjury(workout, filters.injuryMode)
-      );
+      const injuryType = filters.injuryMode as InjuryType;
+      
+      // Filter workouts that have at least some safe exercises
+      filtered = filtered.filter((workout) => {
+        // Check if workout has any exercises that are safe for this injury
+        const hasSafeExercises = workout.exercises.some((exercise) =>
+          isExerciseSafeForInjury(exercise.contraindications, injuryType)
+        );
+        
+        // Keep workouts that have safe exercises OR have alternatives defined
+        const hasAlternatives = workout.exercises.some((exercise) =>
+          exercise.alternatives && Object.keys(exercise.alternatives).length > 0
+        );
+        
+        return hasSafeExercises || hasAlternatives;
+      });
     }
 
     return filtered;

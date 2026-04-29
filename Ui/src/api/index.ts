@@ -30,3 +30,6 @@ export * from './videos'
 
 // Export all sessions-related functions and types
 export * from './sessions'
+
+// Export all dashboard-related functions and types
+export * from './dashboard'

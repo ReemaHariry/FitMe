@@ -26,8 +26,8 @@ export function useUserSettings() {
   const updateSettings = useCallback((patch: Partial<UserSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...patch };
-      // Auto-clear injuryType when mode is not injury
-      if (next.mode !== "injury") next.injuryType = null;
+      // CHANGED: Don't auto-clear injuryType - it's now a filter that persists across mode changes
+      // Users can manually clear it via the Injury Mode dropdown in Normal mode
       try {
         localStorage.setItem("fitapp_user_settings", JSON.stringify(next));
       } catch {}

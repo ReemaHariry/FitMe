@@ -2,13 +2,14 @@
 Sessions Routes
 
 Handles live training session lifecycle management.
-POST /sessions/start — creates session in memory AND in database
-POST /sessions/{id}/end — ends session, generates report, saves to DB
+POST /sessions/start       — creates session in memory AND in database
+POST /sessions/{id}/end    — ends session, generates report, saves to DB
+GET  /sessions/recent      — returns the last N completed sessions (dashboard)
 """
 
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 import logging
 
@@ -291,3 +292,95 @@ async def end_session(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to end session: {str(e)}"
         )
+
+
+# ============================================================================
+# ENDPOINT: GET /sessions/recent
+# ============================================================================
+
+@router.get("/recent")
+async def get_recent_sessions(
+    limit: int = 3,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Returns the most recent completed sessions for the dashboard.
+
+    Also fetches the report_id for each session (for deep-link navigation).
+    Query param: limit (default 3, max 10)
+
+    Returns:
+        List of session dicts with id, session_name, exercise_type,
+        duration_minutes, form_score, performance_rating, date_label, report_id
+    """
+    user_id = current_user["id"]
+
+    # Guard against absurd limits
+    if limit > 10:
+        limit = 10
+
+    try:
+        supabase = get_supabase_client()
+
+        # Fetch recent completed sessions
+        sessions_result = supabase.table("exercise_sessions") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .eq("status", "completed") \
+            .order("created_at", desc=True) \
+            .limit(limit) \
+            .execute()
+
+        sessions = sessions_result.data or []
+
+        if not sessions:
+            return []
+
+        # Fetch report IDs for these sessions in one query
+        session_ids = [s["id"] for s in sessions]
+        reports_result = supabase.table("reports") \
+            .select("id, session_id") \
+            .in_("session_id", session_ids) \
+            .execute()
+
+        report_map = {r["session_id"]: r["id"] for r in (reports_result.data or [])}
+
+        # Format and return
+        month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        result: List[dict] = []
+
+        for s in sessions:
+            created_at = s.get("created_at") or ""
+            try:
+                dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                date_label = f"{month_labels[dt.month - 1]} {dt.day}"
+            except Exception:
+                date_label = "Unknown"
+
+            duration_seconds = s.get("duration_seconds") or 0
+            duration_minutes = round(duration_seconds / 60)
+
+            result.append({
+                "id": s["id"],
+                "session_name": (
+                    s.get("session_name")
+                    or f"{s.get('exercise_type', 'Session').replace('_', ' ').title()} Session"
+                ),
+                "exercise_type": s.get("exercise_type") or "unknown",
+                "duration_seconds": duration_seconds,
+                "duration_minutes": duration_minutes,
+                "form_score": s.get("form_score"),
+                "performance_rating": s.get("performance_rating") or "unknown",
+                "total_mistakes": s.get("total_mistakes") or 0,
+                "status": s.get("status"),
+                "created_at": created_at,
+                "date_label": date_label,
+                "report_id": report_map.get(s["id"])
+            })
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Recent sessions error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to load recent sessions")

@@ -37,9 +37,8 @@ Full-stack AI-powered fitness training application with real-time form correctio
 ### Backend (FastAPI)
 ```bash
 cd backend
-python -m venv venv
+python -m venv gradvenv
 gradvenv\Scripts\activate        
-pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 

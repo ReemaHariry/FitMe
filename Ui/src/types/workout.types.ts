@@ -2,6 +2,8 @@
 // Workout Type Definitions — Smart Adaptive System
 // ─────────────────────────────────────────────────────────────
 
+import { InjuryType } from "../data/injuryData";
+
 export type WorkoutType = "upper" | "lower" | "full" | "crossfit" | "calisthenics";
 export type DifficultyLevel = "beginner" | "intermediate" | "advanced";
 export type MuscleGroup =
@@ -12,14 +14,14 @@ export type MuscleGroup =
 export type InjuryMode = "none" | "knee" | "back" | "shoulder";
 
 // ── User Settings ──────────────────────────────────────────
-export type UserMode = "normal" | "injury" | "pregnant" | "child";
-export type InjuryType = "knee" | "shoulder" | "back";
+// CHANGED: Removed "injury" from UserMode - injury is now a filter within Normal mode
+export type UserMode = "normal" | "pregnant" | "child";
 export type UserGoal = "fat_loss" | "muscle_gain" | "mobility";
 export type Equipment = "none" | "dumbbells" | "full_gym";
 
 export interface UserSettings {
   mode: UserMode;
-  injuryType: InjuryType | null;
+  injuryType: string | null; // Now uses InjuryType from injuryData
   goal: UserGoal | null;
   time: number | null;
   equipment: Equipment;
@@ -110,5 +112,5 @@ export interface FilterState {
   search: string;
   muscleGroups: MuscleGroup[];
   difficulty: DifficultyLevel | "all";
-  injuryMode: InjuryMode; // kept for legacy filter hook
+  injuryMode: string; // Now uses InjuryType from injuryData
 }

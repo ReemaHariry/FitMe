@@ -17,7 +17,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TensorFlow warnings
 os.environ["MEDIAPIPE_DISABLE_GPU"] = "1"  # Use CPU only
 
 # Import routers
-from app.routes import auth, users, reports, videos, sessions
+from app.routes import auth, users, reports, videos, sessions, dashboard
 from app.websockets.live_handler import handle_live_session
 
 # Configure logging
@@ -125,6 +125,9 @@ app.include_router(videos.router, prefix="/videos", tags=["videos"])
 
 # Include live session routes
 app.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
+
+# Include dashboard statistics routes
+app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 
 
 # ============================================================================

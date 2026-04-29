@@ -5,7 +5,7 @@
 
 import { Play } from "lucide-react";
 import { Exercise, InjurySafeExercise } from "../../types/workout.types";
-import { isInjurySafeExercise } from "../../utils/injuryAdapter";
+import { isInjurySafeExercise } from "../../data/injuryData";
 
 interface ExerciseListProps {
   exercises: (Exercise | InjurySafeExercise)[];

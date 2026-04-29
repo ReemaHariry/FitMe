@@ -1,98 +1,66 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Play, Zap, Calendar, TrendingUp, Award, Target, Upload } from 'lucide-react'
+import { Play, Target, Calendar, Upload } from 'lucide-react'
 import { useI18nStore } from '@/app/i18n'
 import { useAuthStore } from '@/app/store'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import StatsCard from '@/components/cards/StatsCard'
-import WorkoutCard from '@/components/cards/WorkoutCard'
 import ActivityChart from '@/components/charts/ActivityChart'
 import ProgressChart from '@/components/charts/ProgressChart'
-import StartWorkoutModal from '@/components/modals/StartWorkoutModal'
-// TEMPORARY - REMOVE AFTER VERIFICATION
-import apiClient from '@/api/client'
+import { dashboardApi, type DashboardStats, type RecentSession } from '@/api/dashboard'
 
 export default function Dashboard() {
   const { t } = useI18nStore()
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const [showStartModal, setShowStartModal] = useState(false)
+  
+  // ============================================================================
+  // REAL DATA STATE
+  // ============================================================================
+  const [dashStats, setDashStats] = useState<DashboardStats | null>(null)
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([])
+  const [statsLoading, setStatsLoading] = useState(true)
 
-  // TEMPORARY - REMOVE AFTER VERIFICATION
-  // Test API connection to backend
+  // Load dashboard data on mount
   useEffect(() => {
-    const testApiConnection = async () => {
+    const loadDashboard = async () => {
       try {
-        console.log('🔍 Testing API connection to backend...')
-        const response = await apiClient.get('/health')
-        console.log('✅ API Connection Successful!')
-        console.log('📦 Response data:', response.data)
-      } catch (error) {
-        console.error('❌ API Connection Failed!')
-        console.error('Error details:', error)
+        setStatsLoading(true)
+        const [stats, recent] = await Promise.all([
+          dashboardApi.getStats(),
+          dashboardApi.getRecentSessions(3)
+        ])
+        setDashStats(stats)
+        setRecentSessions(recent)
+      } catch (err) {
+        console.error('Failed to load dashboard:', err)
+      } finally {
+        setStatsLoading(false)
       }
     }
 
-    testApiConnection()
+    loadDashboard()
   }, [])
 
-  const handleStartWorkout = (workoutData: {
-    name: string
-    type: 'preset' | 'custom'
-    workoutId?: string
-    exercises?: string[]
-    startTime: Date
-  }) => {
-    // Navigate to live training with the workout data
-    navigate('/live-training', { state: { workoutData } })
-  }
-
+  // ============================================================================
+  // STATS ARRAY NOW USES REAL DATA
+  // ============================================================================
   const stats = [
     {
       title: t('dashboard.totalSessions'),
-      value: '24',
+      value: statsLoading ? '...' : String(dashStats?.total_sessions ?? 0),
       icon: Target,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
     {
       title: t('dashboard.workoutStreak'),
-      value: '12 days',
+      value: statsLoading ? '...' : `${dashStats?.current_streak ?? 0} days`,
       icon: Calendar,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
-    },
-  ]
-
-  const todaysWorkout = {
-    id: '1',
-    name: 'Upper Body Strength',
-    duration: 45,
-    exercises: 8,
-    difficulty: 'Intermediate',
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
-  }
-
-  const recentWorkouts = [
-    {
-      id: '1',
-      name: 'Push-ups Session',
-      date: '2024-01-15',
-      duration: 30,
-    },
-    {
-      id: '2',
-      name: 'Squats Session',
-      date: '2024-01-13',
-      duration: 25,
-    },
-    {
-      id: '3',
-      name: 'Sit-ups Session',
-      date: '2024-01-11',
-      duration: 20,
     },
   ]
 
@@ -162,26 +130,52 @@ export default function Dashboard() {
                 {t('dashboard.viewAll')}
               </Button>
             </div>
-            <div className="space-y-4">
-              {recentWorkouts.map((workout) => (
-                <div
-                  key={workout.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl"
-                >
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white">
-                      {workout.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {workout.date} • {workout.duration}min
-                    </p>
+            
+            {/* Loading State */}
+            {statsLoading && (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse p-4 bg-gray-200 dark:bg-gray-700 rounded-xl h-16"></div>
+                ))}
+              </div>
+            )}
+            
+            {/* Empty State */}
+            {!statsLoading && recentSessions.length === 0 && (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                No sessions yet. Start training or upload a video!
+              </div>
+            )}
+            
+            {/* Recent Sessions List */}
+            {!statsLoading && recentSessions.length > 0 && (
+              <div className="space-y-4">
+                {recentSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    onClick={() => session.report_id && navigate(`/reports/${session.report_id}`)}
+                    className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl ${
+                      session.report_id ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors' : ''
+                    }`}
+                  >
+                    <div>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {session.session_name}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {session.date_label} • {session.duration_minutes}min
+                        {session.form_score !== null && ` • Score: ${session.form_score}/100`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-primary capitalize">
+                        {session.performance_rating.replace('_', ' ')}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-primary">{t('dashboard.completed')}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </motion.div>
       </div>
@@ -199,11 +193,6 @@ export default function Dashboard() {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {t('dashboard.weeklyActivity')}
               </h2>
-              <select className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700">
-                <option>{t('dashboard.thisWeek')}</option>
-                <option>{t('dashboard.lastWeek')}</option>
-                <option>{t('dashboard.thisMonth')}</option>
-              </select>
             </div>
             <ActivityChart />
           </Card>
@@ -220,19 +209,11 @@ export default function Dashboard() {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {t('dashboard.progressOverTime')}
               </h2>
-              <select className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700">
-                <option>{t('dashboard.sessions')}</option>
-                <option>{t('dashboard.duration')}</option>
-              </select>
             </div>
             <ProgressChart />
           </Card>
         </motion.div>
       </div>
-
-      {/* Recent Workouts */}
-
-      {/* Start Workout Modal */}
     </div>
   )
 }
