@@ -57,7 +57,7 @@ export default function Dashboard() {
     },
     {
       title: t('dashboard.workoutStreak'),
-      value: statsLoading ? '...' : `${dashStats?.current_streak ?? 0} days`,
+      value: statsLoading ? '...' : `${dashStats?.current_streak ?? 0} ${t('dashboard.days')}`,
       icon: Calendar,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
@@ -75,18 +75,18 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Welcome back, {user?.name?.split(' ')[0]}! 👋
+              👋 {t('auth.welcomeBack')}, {user?.name?.split(' ')[0]}!
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               {t('dashboard.welcomeMessage')}
             </p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex gap-3">
             <Button 
               onClick={() => navigate('/live-training')}
               className="flex items-center"
             >
-              <Play className="w-4 h-4 mr-2" />
+              <Play className="w-4 h-4 me-2" />
               {t('dashboard.startTraining')}
             </Button>
             <Button
@@ -94,8 +94,8 @@ export default function Dashboard() {
               variant="outline"
               className="flex items-center"
             >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Video
+              <Upload className="w-4 h-4 me-2" />
+              {t('dashboard.uploadVideo')}
             </Button>
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function Dashboard() {
             {/* Empty State */}
             {!statsLoading && recentSessions.length === 0 && (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                No sessions yet. Start training or upload a video!
+                {t('dashboard.noSessionsYet')}
               </div>
             )}
             
@@ -163,8 +163,8 @@ export default function Dashboard() {
                         {session.session_name}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {session.date_label} • {session.duration_minutes}min
-                        {session.form_score !== null && ` • Score: ${session.form_score}/100`}
+                        {session.date_label} • {session.duration_minutes}{t('common.minutes')}
+                        {session.form_score !== null && ` • ${t('common.score')}: ${session.form_score}/100`}
                       </p>
                     </div>
                     <div className="text-right">

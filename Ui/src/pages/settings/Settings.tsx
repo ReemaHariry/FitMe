@@ -24,7 +24,7 @@ import Select from '@/components/ui/Select'
 export default function Settings() {
   const { logout } = useAuthStore()
   const { theme, toggleTheme } = useThemeStore()
-  const { language, setLanguage } = useI18nStore()
+  const { language, setLanguage, t } = useI18nStore()
   const [notifications, setNotifications] = useState({
     workoutReminders: true,
     progressUpdates: true,
@@ -33,6 +33,7 @@ export default function Settings() {
     pushNotifications: true,
   })
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [showLanguageSuccess, setShowLanguageSuccess] = useState(false)
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to log out?')) {
@@ -57,6 +58,12 @@ export default function Settings() {
     console.log('Data import requested')
   }
 
+  const handleLanguageChange = (newLang: 'en' | 'ar') => {
+    setLanguage(newLang)
+    setShowLanguageSuccess(true)
+    setTimeout(() => setShowLanguageSuccess(false), 3000)
+  }
+
   const languageOptions = [
     { value: 'en', label: 'English' },
     { value: 'ar', label: 'العربية' },
@@ -64,11 +71,11 @@ export default function Settings() {
 
   const settingSections = [
     {
-      title: 'Appearance',
+      title: t('settings.theme'),
       icon: theme === 'dark' ? Moon : Sun,
       settings: [
         {
-          label: 'Theme',
+          label: t('settings.theme'),
           description: 'Choose your preferred theme',
           control: (
             <Button
@@ -79,26 +86,26 @@ export default function Settings() {
             >
               {theme === 'dark' ? (
                 <>
-                  <Sun className="w-4 h-4 mr-2" />
-                  Light
+                  <Sun className="w-4 h-4 me-2" />
+                  {t('settings.lightMode')}
                 </>
               ) : (
                 <>
-                  <Moon className="w-4 h-4 mr-2" />
-                  Dark
+                  <Moon className="w-4 h-4 me-2" />
+                  {t('settings.darkMode')}
                 </>
               )}
             </Button>
           ),
         },
         {
-          label: 'Language',
-          description: 'Select your preferred language',
+          label: t('settings.language'),
+          description: t('settings.selectLanguage'),
           control: (
             <Select
               options={languageOptions}
               value={language}
-              onChange={(e) => setLanguage(e.target.value as 'en' | 'ar')}
+              onChange={(e) => handleLanguageChange(e.target.value as 'en' | 'ar')}
               className="w-32"
             />
           ),
@@ -106,7 +113,7 @@ export default function Settings() {
       ],
     },
     {
-      title: 'Notifications',
+      title: t('settings.notifications'),
       icon: Bell,
       settings: [
         {
@@ -199,12 +206,12 @@ export default function Settings() {
             >
               {soundEnabled ? (
                 <>
-                  <Volume2 className="w-4 h-4 mr-2" />
+                  <Volume2 className="w-4 h-4 me-2" />
                   On
                 </>
               ) : (
                 <>
-                  <VolumeX className="w-4 h-4 mr-2" />
+                  <VolumeX className="w-4 h-4 me-2" />
                   Off
                 </>
               )}
@@ -251,7 +258,7 @@ export default function Settings() {
               onClick={handleExportData}
               className="flex items-center"
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4 me-2" />
               Export
             </Button>
           ),
@@ -266,7 +273,7 @@ export default function Settings() {
               onClick={handleImportData}
               className="flex items-center"
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className="w-4 h-4 me-2" />
               Import
             </Button>
           ),
@@ -277,10 +284,29 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
+      {/* Language Change Success Message */}
+      {showLanguageSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 flex items-center"
+        >
+          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center me-3">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span className="text-green-600 dark:text-green-400 font-medium">
+            {t('settings.settingsSaved')}
+          </span>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Settings
+          {t('settings.title')}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
           Customize your AI Fitness Trainer experience
@@ -297,7 +323,7 @@ export default function Settings() {
             transition={{ duration: 0.5, delay: sectionIndex * 0.1 }}
           >
             <Card>
-              <div className="flex items-center space-x-3 mb-6">
+              <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                   <section.icon className="w-5 h-5 text-primary" />
                 </div>
@@ -338,7 +364,7 @@ export default function Settings() {
         transition={{ duration: 0.5, delay: 0.6 }}
       >
         <Card>
-          <div className="flex items-center space-x-3 mb-6">
+          <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center">
               <LogOut className="w-5 h-5 text-red-500" />
             </div>
@@ -362,7 +388,7 @@ export default function Settings() {
                 onClick={handleLogout}
                 className="flex items-center text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
               >
-                <LogOut className="w-4 h-4 mr-2" />
+                <LogOut className="w-4 h-4 me-2" />
                 Sign Out
               </Button>
             </div>
@@ -381,7 +407,7 @@ export default function Settings() {
                 onClick={handleDeleteAccount}
                 className="flex items-center text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="w-4 h-4 me-2" />
                 Delete
               </Button>
             </div>
@@ -406,7 +432,7 @@ export default function Settings() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Version 1.0.0
             </p>
-            <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
               <button className="hover:text-primary">Privacy Policy</button>
               <span>•</span>
               <button className="hover:text-primary">Terms of Service</button>

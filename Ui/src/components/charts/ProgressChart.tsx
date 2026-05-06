@@ -25,12 +25,14 @@ import {
   Dot
 } from 'recharts'
 import { dashboardApi, type MonthlyProgress } from '@/api/dashboard'
+import { useI18nStore } from '@/app/i18n'
 
 interface ProgressChartProps {
   className?: string
 }
 
 export default function ProgressChart({ className = '' }: ProgressChartProps) {
+  const { t } = useI18nStore()
   const [data, setData] = useState<MonthlyProgress[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentScore, setCurrentScore] = useState(0)
@@ -41,7 +43,14 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
       try {
         setLoading(true)
         const result = await dashboardApi.getProgress(6)
-        setData(result.months)
+        
+        // Translate month names
+        const translatedMonths = result.months.map(month => ({
+          ...month,
+          month: translateMonthName(month.month)
+        }))
+        
+        setData(translatedMonths)
         setCurrentScore(result.current_score)
         setImprovement(result.improvement)
       } catch (err) {
@@ -53,6 +62,25 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
 
     fetchData()
   }, [])
+
+  // Translate month names
+  const translateMonthName = (month: string): string => {
+    const monthMap: Record<string, string> = {
+      'Jan': t('months.jan'),
+      'Feb': t('months.feb'),
+      'Mar': t('months.mar'),
+      'Apr': t('months.apr'),
+      'May': t('months.may'),
+      'Jun': t('months.jun'),
+      'Jul': t('months.jul'),
+      'Aug': t('months.aug'),
+      'Sep': t('months.sep'),
+      'Oct': t('months.oct'),
+      'Nov': t('months.nov'),
+      'Dec': t('months.dec'),
+    }
+    return monthMap[month] || month
+  }
 
   // Custom dot component
   const CustomDot = (props: any) => {
@@ -150,7 +178,7 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
       {/* Summary below chart */}
       <div className="flex items-center justify-between mt-4 text-sm">
         <span className="text-gray-600 dark:text-gray-400">
-          Current Score: <span className="font-semibold text-gray-900 dark:text-white">{currentScore}/100</span>
+          {t('dashboard.currentScore')}: <span className="font-semibold text-gray-900 dark:text-white">{currentScore}/100</span>
         </span>
         {improvement !== 0 && (
           <motion.span
@@ -161,7 +189,7 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
               improvement > 0 ? 'text-green-500' : 'text-red-500'
             }`}
           >
-            {improvement > 0 ? '+' : ''}{improvement} points
+            {improvement > 0 ? '+' : ''}{improvement} {t('common.score')}
           </motion.span>
         )}
         {improvement === 0 && (

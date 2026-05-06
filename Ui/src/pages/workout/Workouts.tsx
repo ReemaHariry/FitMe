@@ -5,6 +5,7 @@ import { KIDS_WORKOUTS } from "../../data/kidsWorkoutData";
 import { useWorkoutFilters } from "../../hooks/useWorkoutFilters";
 import { useFavorites } from "../../hooks/useFavorites";
 import { useUserSettings } from "../../hooks/useUserSettings";
+import { useI18nStore } from "@/app/i18n";
 import { generateAllWorkouts } from "../../utils/smartEngine";
 import { FiltersBar } from "../../components/workouts/FiltersBar";
 import { WorkoutGrid } from "../../components/workouts/WorkoutGrid";
@@ -19,6 +20,7 @@ import { INJURY_DATA } from "../../data/injuryData";
 const ALL_WORKOUTS: Workout[] = [...WORKOUTS, ...KIDS_WORKOUTS];
 
 export default function Workouts() {
+  const { t } = useI18nStore();
   const { favorites, toggleFavorite } = useFavorites();
   const { settings, updateSettings } = useUserSettings();
 
@@ -101,20 +103,20 @@ export default function Workouts() {
               <KidsAvatar pose="jumping" size={100} />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                  🌟 Kids Workout Zone!
+                  {t('kids.title')}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Fun exercises just for you! Pick a workout and let's move! 🎉
+                  {t('kids.subtitle')}
                 </p>
               </div>
             </div>
           ) : (
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Workouts
+                {t('workouts.title')}
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Smart adaptive workouts — automatically adjusted for your needs
+                {t('workouts.subtitle')}
               </p>
             </div>
           )}
@@ -133,7 +135,7 @@ export default function Workouts() {
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-semibold text-amber-900 dark:text-amber-100 mb-1">
-                  {injuryLabel} Mode Active
+                  {injuryLabel} {t('workouts.workoutMode')}
                 </h3>
                 <p className="text-sm text-amber-800 dark:text-amber-200">
                   Workouts have been filtered to show exercises safe for your injury. 
@@ -154,8 +156,8 @@ export default function Workouts() {
           {/* Results Count */}
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {isKidsMode
-              ? `${filteredWorkouts.length} fun workouts ready for you! 🎉`
-              : `${filteredWorkouts.length} workout${filteredWorkouts.length !== 1 ? "s" : ""} found`}
+              ? t('kids.funWorkoutsReady').replace('{count}', String(filteredWorkouts.length))
+              : t('workouts.workoutsFound').replace('{count}', String(filteredWorkouts.length))}
           </p>
 
           {/* Workout Grid */}
@@ -185,7 +187,7 @@ export default function Workouts() {
                   onClick={handleClearFilters}
                   className="btn-primary"
                 >
-                  Clear all filters
+                  {t('common.filter')}
                 </button>
               </div>
             </div>

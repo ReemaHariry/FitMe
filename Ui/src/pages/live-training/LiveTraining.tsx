@@ -38,17 +38,17 @@ export default function LiveTraining() {
 
   // Status text based on phase
   const statusText = {
-    'idle': 'Waiting...',
+    'idle': t('liveTraining.waiting'),
     'starting': 'Starting camera...',
     'active': feedback.status === 'buffering'
-      ? `Detecting... (${feedback.bufferProgress}/50)`
+      ? t('liveTraining.bufferingFrames')
       : feedback.status === 'analyzing'
       ? feedback.exercise
-        ? `${feedback.exercise.replace('_', ' ')} detected`
-        : 'Analyzing...'
-      : 'Detecting pose...',
-    'ending': 'Generating report...',
-    'error': 'Error occurred'
+        ? `${feedback.exercise.replace('_', ' ')} ${t('liveTraining.detectingExercise')}`
+        : t('liveTraining.analyzingForm')
+      : t('liveTraining.detectingPose'),
+    'ending': t('liveTraining.generatingReport'),
+    'error': t('liveTraining.errorOccurred')
   }[phase]
 
   // Feedback message color based on form status
@@ -67,7 +67,7 @@ export default function LiveTraining() {
             {t('liveTraining.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Real-time AI coaching and form feedback
+            {t('liveTraining.subtitle')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -77,7 +77,8 @@ export default function LiveTraining() {
             className="flex items-center"
             disabled={phase === 'active' || phase === 'starting' || phase === 'ending'}
           >
-            <Upload className="w-4 h-4 mr-2" />
+            <Upload className="w-4 h-4 me-2" />
+            {t('nav.uploadVideo')}
             Upload Video
           </Button>
         </div>
@@ -144,7 +145,7 @@ export default function LiveTraining() {
                     ) : (
                       <>
                         <CameraOff className="w-16 h-16 mx-auto mb-4" />
-                        <p className="text-lg mb-4">Camera Ready</p>
+                        <p className="text-lg mb-4">{t('liveTraining.positionCamera')}</p>
                         <p className="text-sm mb-4">Click Start Training and the AI will detect your exercise automatically</p>
                       </>
                     )}
@@ -159,8 +160,8 @@ export default function LiveTraining() {
                     onClick={() => startSession('unknown')}
                     className="flex items-center"
                   >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start Training
+                    <Play className="w-4 h-4 me-2" />
+                    {t('liveTraining.startTraining')}
                   </Button>
                 ) : phase === 'active' ? (
                   <Button
@@ -168,12 +169,12 @@ export default function LiveTraining() {
                     variant="outline"
                     className="flex items-center bg-red-500 hover:bg-red-600 text-white border-red-500"
                   >
-                    <Square className="w-4 h-4 mr-2" />
-                    End Training
+                    <Square className="w-4 h-4 me-2" />
+                    {t('liveTraining.endSession')}
                   </Button>
                 ) : phase === 'ending' ? (
                   <div className="text-white text-sm">
-                    Generating report...
+                    {t('liveTraining.generatingReport')}
                   </div>
                 ) : null}
               </div>
@@ -203,12 +204,12 @@ export default function LiveTraining() {
           {/* Timer */}
           <Card>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-              Duration
+              {t('liveTraining.duration')}
             </h3>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <Timer className="w-4 h-4 text-gray-400 mr-2" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Time</span>
+                <Timer className="w-4 h-4 text-gray-400 me-2" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('liveTraining.time')}</span>
               </div>
               <span className="font-mono text-lg font-semibold text-gray-900 dark:text-white">
                 {formattedTime}

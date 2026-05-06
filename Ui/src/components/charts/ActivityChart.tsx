@@ -23,12 +23,14 @@ import {
   Cell
 } from 'recharts'
 import { dashboardApi, type WeeklyDay } from '@/api/dashboard'
+import { useI18nStore } from '@/app/i18n'
 
 interface ActivityChartProps {
   className?: string
 }
 
 export default function ActivityChart({ className = '' }: ActivityChartProps) {
+  const { t } = useI18nStore()
   const [data, setData] = useState<WeeklyDay[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +44,14 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
         setLoading(true)
         setError(null)
         const result = await dashboardApi.getWeeklyActivity(weekOffset)
-        setData(result.days)
+        
+        // Translate day names
+        const translatedDays = result.days.map(day => ({
+          ...day,
+          day: translateDayName(day.day)
+        }))
+        
+        setData(translatedDays)
         setTotalMinutes(result.total_minutes)
         setAvgMinutes(result.average_minutes_per_active_day)
       } catch (err) {
@@ -55,6 +64,20 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
 
     fetchData()
   }, [weekOffset])
+
+  // Translate day names
+  const translateDayName = (day: string): string => {
+    const dayMap: Record<string, string> = {
+      'Mon': t('days.mon'),
+      'Tue': t('days.tue'),
+      'Wed': t('days.wed'),
+      'Thu': t('days.thu'),
+      'Fri': t('days.fri'),
+      'Sat': t('days.sat'),
+      'Sun': t('days.sun'),
+    }
+    return dayMap[day] || day
+  }
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -141,10 +164,10 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
       {/* Summary below chart */}
       <div className="flex items-center justify-between mt-4 text-sm">
         <span className="text-gray-600 dark:text-gray-400">
-          Total: <span className="font-semibold text-gray-900 dark:text-white">{totalMinutes} minutes</span>
+          {t('common.total')}: <span className="font-semibold text-gray-900 dark:text-white">{totalMinutes} {t('common.minutes')}</span>
         </span>
         <span className="text-gray-600 dark:text-gray-400">
-          Avg: <span className="font-semibold text-gray-900 dark:text-white">{avgMinutes} min/day</span>
+          {t('common.average')}: <span className="font-semibold text-gray-900 dark:text-white">{avgMinutes} {t('common.minutes')}/{t('common.days')}</span>
         </span>
       </div>
     </div>
