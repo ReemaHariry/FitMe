@@ -25,18 +25,19 @@ export default function VideoUpload() {
   const [analysisResult, setAnalysisResult] = useState<VideoUploadResponse | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false) // Prevent multiple uploads
 
   // Handle upload
   const handleUpload = async () => {
-    if (!selectedFile) return
+    if (!selectedFile || isUploading) return
 
+    // Prevent multiple simultaneous uploads
+    setIsUploading(true)
     setUploadPhase('uploading')
     setUploadProgress(0)
     setErrorMessage(null)
 
     try {
-      let analysisPhaseStarted = false
-
       const result = await videosApi.upload(
         {
           video: selectedFile,
@@ -46,15 +47,14 @@ export default function VideoUpload() {
           setUploadProgress(percent)
           
           // When upload completes, switch to analyzing phase
-          if (percent === 100 && !analysisPhaseStarted) {
-            analysisPhaseStarted = true
+          if (percent === 100) {
             setUploadPhase('analyzing')
-            setSessionId(result.session_id)
           }
         }
       )
 
-      // Analysis complete
+      // Analysis complete - set session ID and result
+      setSessionId(result.session_id)
       setAnalysisResult(result)
       setUploadPhase('complete')
     } catch (error: any) {
@@ -63,6 +63,8 @@ export default function VideoUpload() {
         error.response?.data?.detail || error.message || 'Upload failed. Please try again.'
       )
       setUploadPhase('error')
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -75,6 +77,7 @@ export default function VideoUpload() {
     setAnalysisResult(null)
     setErrorMessage(null)
     setSessionId(null)
+    setIsUploading(false)
   }
 
   // Render based on phase
@@ -238,12 +241,12 @@ export default function VideoUpload() {
           {/* Upload Button */}
           <Button
             onClick={handleUpload}
-            disabled={!selectedFile}
+            disabled={!selectedFile || isUploading}
             className="w-full flex items-center justify-center"
             size="lg"
           >
             <Dumbbell className="w-5 h-5 mr-2" />
-            Analyze Video
+            {isUploading ? 'Uploading...' : 'Analyze Video'}
           </Button>
         </Card>
       </div>

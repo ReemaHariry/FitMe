@@ -1,6 +1,5 @@
 """
-WebSockets Package
+WebSockets Module
 
-This package will contain WebSocket handlers for real-time communication.
-Future files: live_training.py, notifications.py, etc.
+Handles real-time WebSocket connections for live training sessions.
 """

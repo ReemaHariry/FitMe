@@ -12,23 +12,23 @@ import {
   ContraindicationKey,
 } from "../types/workout.types";
 
+// CHANGED: Updated to handle injury filtering through injuryType instead of mode
 function getActiveContraindications(settings: UserSettings): ContraindicationKey[] {
   const keys: ContraindicationKey[] = [];
   if (settings.mode === "pregnant") keys.push("pregnant");
-  if (settings.mode === "injury" && settings.injuryType) {
+  // CHANGED: Check injuryType directly instead of checking mode === "injury"
+  if (settings.injuryType) {
     keys.push(`${settings.injuryType}_injury` as ContraindicationKey);
   }
   return keys;
 }
 
+// CHANGED: Updated badge logic to remove injury mode
 function buildBadge(settings: UserSettings): string | null {
   if (settings.mode === "normal")   return null;
   if (settings.mode === "pregnant") return "Pregnancy Safe";
   if (settings.mode === "child")    return "⭐ Kids Workout";
-  if (settings.mode === "injury" && settings.injuryType) {
-    const label = settings.injuryType.charAt(0).toUpperCase() + settings.injuryType.slice(1);
-    return `Modified for ${label} Injury`;
-  }
+  // CHANGED: Removed injury mode badge - injury is now a filter, not a mode
   return null;
 }
 

@@ -6,8 +6,23 @@ import { ExerciseDetailModal } from "./ExerciseDetailModal";
 import { TimerComponent } from "./TimerComponent";
 import { InjuryBanner } from "./InjuryBanner";
 import { KidsAvatar } from "./KidsAvatar";
-import { getSwappedExercises } from "../../utils/injuryAdapter";
 import Button from "../ui/Button";
+
+/**
+ * Helper function to get swapped exercises between original and adapted workout
+ */
+function getSwappedExercises(
+  original: Workout,
+  adapted: { exercises: RuntimeExercise[] }
+): Array<{ original: string; replacement: string }> {
+  return original.exercises
+    .map((orig, i) => {
+      const adapted_ = adapted.exercises[i];
+      if (!adapted_ || orig.name === adapted_.name) return null;
+      return { original: orig.name, replacement: adapted_.name };
+    })
+    .filter(Boolean) as Array<{ original: string; replacement: string }>;
+}
 
 interface WorkoutDetailModalProps {
   workout: SmartWorkout | null;
@@ -43,9 +58,9 @@ export function WorkoutDetailModal({
 
   const isKidsMode = userSettings.mode === "child";
 
-  // Legacy injuryMode for InjuryBanner
+  // CHANGED: Legacy injuryMode for InjuryBanner - now just checks injuryType directly
   const legacyInjuryMode =
-    userSettings.mode === "injury" && userSettings.injuryType
+    userSettings.injuryType && userSettings.injuryType !== "none"
       ? userSettings.injuryType
       : "none";
 

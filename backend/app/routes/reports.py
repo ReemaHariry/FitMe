@@ -83,6 +83,37 @@ router = APIRouter(
 
 
 # ============================================================================
+# ENDPOINT: GET /reports/health
+# ============================================================================
+
+@router.get("/health")
+async def health_check():
+    """
+    Health check endpoint to verify Supabase connection.
+    Does not require authentication.
+    """
+    try:
+        from app.services.supabase_service import get_supabase_client
+        supabase = get_supabase_client()
+        
+        # Try a simple query
+        result = supabase.table("exercise_sessions").select("id").limit(1).execute()
+        
+        return {
+            "status": "healthy",
+            "supabase_connected": True,
+            "message": "Database connection successful"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "supabase_connected": False,
+            "error": str(e),
+            "message": "Database connection failed"
+        }
+
+
+# ============================================================================
 # ENDPOINT: GET /reports/stats
 # ============================================================================
 # IMPORTANT: This route MUST come BEFORE /reports/{report_id}
@@ -107,13 +138,18 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
     """
     try:
         user_id = current_user["id"]
+        print(f"Fetching stats for user: {user_id}")
         stats = get_user_stats(user_id)
+        print(f"Successfully fetched stats: {stats}")
         return UserStatsResponse(**stats)
     except Exception as e:
-        print(f"Stats fetch error: {str(e)}")
+        print(f"ERROR in get_stats endpoint: {str(e)}")
+        print(f"ERROR type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch statistics"
+            detail=f"Failed to fetch statistics: {str(e)}"
         )
 
 
@@ -135,13 +171,18 @@ async def get_reports(current_user: dict = Depends(get_current_user)):
     """
     try:
         user_id = current_user["id"]
+        print(f"Fetching reports for user: {user_id}")
         reports = get_user_reports(user_id)
+        print(f"Successfully fetched {len(reports)} reports")
         return [ReportSummary(**report) for report in reports]
     except Exception as e:
-        print(f"Reports fetch error: {str(e)}")
+        print(f"ERROR in get_reports endpoint: {str(e)}")
+        print(f"ERROR type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch reports"
+            detail=f"Failed to fetch reports: {str(e)}"
         )
 
 

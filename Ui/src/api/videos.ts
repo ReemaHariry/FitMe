@@ -42,6 +42,9 @@ export interface SessionStatus {
 // API FUNCTIONS
 // ============================================================================
 
+// Track ongoing uploads to prevent duplicates
+const ongoingUploads = new Map<string, Promise<VideoUploadResponse>>()
+
 export const videosApi = {
   /**
    * Upload and analyze a workout video
@@ -54,6 +57,15 @@ export const videosApi = {
     data: UploadVideoRequest,
     onProgress?: (percent: number) => void
   ): Promise<VideoUploadResponse> => {
+    // Create a unique key for this upload to prevent duplicates
+    const uploadKey = `${data.video.name}-${data.video.size}-${data.video.lastModified}`
+    
+    // Check if this exact file is already being uploaded
+    if (ongoingUploads.has(uploadKey)) {
+      console.warn('⚠️ Duplicate upload detected, reusing existing request')
+      return ongoingUploads.get(uploadKey)!
+    }
+
     const formData = new FormData()
     formData.append('video', data.video)
     
@@ -61,7 +73,8 @@ export const videosApi = {
       formData.append('session_name', data.session_name)
     }
 
-    const response = await apiClient.post('/videos/upload', formData, {
+    // Create the upload promise
+    const uploadPromise = apiClient.post('/videos/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -72,9 +85,20 @@ export const videosApi = {
           onProgress(percent)
         }
       },
+    }).then(response => {
+      // Remove from ongoing uploads when complete
+      ongoingUploads.delete(uploadKey)
+      return response.data
+    }).catch(error => {
+      // Remove from ongoing uploads on error
+      ongoingUploads.delete(uploadKey)
+      throw error
     })
 
-    return response.data
+    // Store the promise to prevent duplicate uploads
+    ongoingUploads.set(uploadKey, uploadPromise)
+
+    return uploadPromise
   },
 
   /**
