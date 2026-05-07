@@ -311,4 +311,9 @@ export const ar = {
   'mistake.insufficientRange': 'مدى غير كافٍ',
   'mistake.neckStrain': 'إجهاد الرقبة',
   'mistake.formIssue': 'مشكلة في الوضعية',
+  
+  // Voice feedback
+  'liveTraining.voiceOn': 'التغذية الصوتية مفعلة',
+  'liveTraining.voiceOff': 'التغذية الصوتية معطلة',
+  'liveTraining.voiceNotSupported': 'الصوت غير مدعوم في هذا المتصفح',
 }

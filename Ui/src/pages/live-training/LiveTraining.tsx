@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react' // VOICE ADDED
 import {
   Play,
   Square,
@@ -9,16 +10,19 @@ import {
   Timer,
   Zap,
   Upload,
-  AlertCircle
+  AlertCircle,
+  Volume2, // VOICE ADDED
+  VolumeX  // VOICE ADDED
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { useI18nStore } from '@/app/i18n'
+import { useI18nStore, aiFeedbackMap } from '@/app/i18n' // VOICE CHANGED - added aiFeedbackMap
 import { useLiveSession } from '@/hooks/useLiveSession'
+import { useVoiceFeedback } from '@/hooks/useVoiceFeedback' // VOICE ADDED
 
 export default function LiveTraining() {
   const navigate = useNavigate()
-  const { t } = useI18nStore()
+  const { t, language } = useI18nStore() // VOICE CHANGED - added language
   
   // Main live session hook - manages everything
   const {
@@ -32,6 +36,62 @@ export default function LiveTraining() {
     errorMessage,
     reset
   } = useLiveSession()
+
+  // VOICE ADDED - Voice feedback state (persisted in localStorage)
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return localStorage.getItem('voice-feedback-enabled') !== 'false'
+  })
+
+  // VOICE ADDED - Initialize voice feedback hook
+  const {
+    speak,
+    cancel,
+    reset: resetVoice, // VOICE CHANGED - Added reset function
+    isSupported,
+    isSpeaking
+  } = useVoiceFeedback({
+    enabled: voiceEnabled,
+    language: language as 'en' | 'ar',
+    rate: 1.1,
+    volume: 1.0
+  })
+
+  // VOICE ADDED - Helper function to get speakable text (translated if Arabic)
+  const getSpeakableText = (feedbackText: string): string => {
+    if (language === 'ar') {
+      // Map English feedback to translation key, then get Arabic text
+      const translationKey = aiFeedbackMap[feedbackText]
+      if (translationKey) {
+        return t(translationKey)
+      }
+    }
+    return feedbackText
+  }
+
+  // VOICE ADDED - Persist voice preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('voice-feedback-enabled', String(voiceEnabled))
+  }, [voiceEnabled])
+
+  // VOICE ADDED - Speak feedback when it updates during active session
+  useEffect(() => {
+    if (!feedback.message || phase !== 'active') return
+    
+    const speakableText = getSpeakableText(feedback.message)
+    speak(speakableText, feedback.formStatus)
+  }, [feedback.message, feedback.formStatus, phase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // VOICE ADDED - Cancel speech when session ends
+  useEffect(() => {
+    if (phase === 'ending' || phase === 'error' || phase === 'idle') {
+      cancel()
+      // VOICE CHANGED - Also reset all voice state when session ends
+      if (phase === 'idle') {
+        resetVoice()
+      }
+    }
+  }, [phase, cancel, resetVoice]) // VOICE CHANGED - Added resetVoice to dependencies
 
   // No exercise selection needed - AI will detect it automatically
   // We'll use "unknown" as placeholder and let AI detect the actual exercise
@@ -134,6 +194,16 @@ export default function LiveTraining() {
                       <>
                         <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
                         <p className="text-lg mb-4 text-red-400">{errorMessage}</p>
+                        {errorMessage?.includes('row-level security') && (
+                          <p className="text-sm text-yellow-400 mb-4">
+                            This usually means you need to log in again. Try logging out and back in.
+                          </p>
+                        )}
+                        {errorMessage?.includes('401') && (
+                          <p className="text-sm text-yellow-400 mb-4">
+                            Your session has expired. Please log in again.
+                          </p>
+                        )}
                         <Button
                           onClick={reset}
                           variant="secondary"
@@ -219,9 +289,37 @@ export default function LiveTraining() {
 
           {/* AI Feedback */}
           <Card>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-              AI Feedback
-            </h3>
+            {/* VOICE CHANGED - Added flex container for title and voice toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                AI Feedback
+              </h3>
+              {/* VOICE ADDED - Voice toggle button */}
+              <button
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                disabled={!isSupported}
+                title={
+                  !isSupported
+                    ? t('liveTraining.voiceNotSupported')
+                    : voiceEnabled
+                    ? t('liveTraining.voiceOn')
+                    : t('liveTraining.voiceOff')
+                }
+                className={`p-1.5 rounded-lg transition-colors ${
+                  voiceEnabled && isSupported
+                    ? 'text-primary hover:bg-primary/10'
+                    : 'text-gray-500 hover:bg-gray-700/50'
+                } ${
+                  !isSupported ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                }`}
+              >
+                {voiceEnabled && isSupported ? (
+                  <Volume2 className="w-4 h-4" />
+                ) : (
+                  <VolumeX className="w-4 h-4" />
+                )}
+              </button>
+            </div>
 
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {phase === 'idle' || phase === 'starting' ? (
@@ -239,9 +337,20 @@ export default function LiveTraining() {
                     exit={{ opacity: 0, y: -20 }}
                     className="p-3 bg-primary/10 rounded-xl"
                   >
-                    <p className={`text-sm font-medium ${feedbackColorClass}`}>
-                      {feedback.message}
-                    </p>
+                    {/* VOICE CHANGED - Added flex container for feedback text and speaking indicator */}
+                    <div className="flex items-center">
+                      <p className={`text-sm font-medium ${feedbackColorClass}`}>
+                        {feedback.message}
+                      </p>
+                      {/* VOICE ADDED - Speaking indicator (pulsing dots) */}
+                      {isSpeaking && (
+                        <span className="inline-flex items-center gap-1 ms-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" style={{ animationDelay: '75ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" style={{ animationDelay: '150ms' }} />
+                        </span>
+                      )}
+                    </div>
                     {feedback.mistakesCount > 0 && (
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                         Mistakes detected: {feedback.mistakesCount}

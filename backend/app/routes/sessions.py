@@ -123,7 +123,7 @@ async def start_session(
             session_name=session_name
         )
         
-        # Insert into database with status='processing' (live session in progress)
+        # Insert into database with status='active' (live session in progress)
         supabase = get_supabase_client()
         
         session_data = {
@@ -132,14 +132,26 @@ async def start_session(
             "exercise_type": request.exercise_name,
             "session_name": session_name,
             "video_url": None,  # NULL for live sessions
-            "status": "processing",  # ← CHANGED from 'active' to 'processing'
+            "status": "active",  # FIXED: Changed back to 'active' (valid status value)
             "started_at": datetime.now().isoformat()
         }
         
-        result = supabase.table("exercise_sessions").insert(session_data).execute()
-        
-        if not result.data:
-            raise Exception("Failed to create session record in database")
+        try:
+            result = supabase.table("exercise_sessions").insert(session_data).execute()
+            
+            if not result.data:
+                raise Exception("Failed to create session record in database")
+        except Exception as db_error:
+            logger.error(f"Database insert failed: {db_error}")
+            # If RLS is blocking, try to provide more helpful error message
+            if "row-level security" in str(db_error).lower():
+                logger.error(
+                    f"RLS Policy Error: The service role key should bypass RLS. "
+                    f"Please check: 1) SUPABASE_SERVICE_KEY is set correctly in .env, "
+                    f"2) You're using the service_role key (not anon key), "
+                    f"3) RLS policies on exercise_sessions table"
+                )
+            raise
         
         logger.info(f"Live session started: {session_id} for user {user_id}")
         

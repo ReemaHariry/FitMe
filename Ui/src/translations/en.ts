@@ -311,4 +311,44 @@ export const en = {
   'mistake.insufficientRange': 'Insufficient range',
   'mistake.neckStrain': 'Neck strain',
   'mistake.formIssue': 'Form issue',
+  
+  // Additional UI translations
+  'workouts.upperBody': 'Upper Body',
+  'workouts.lowerBody': 'Lower Body',
+  'workouts.fullBody': 'Full Body',
+  'workouts.viewWorkout': 'View Workout',
+  'workouts.markAsCompleted': 'Mark as Completed',
+  'workouts.close': 'Close',
+  'workouts.madeActive': 'Made Active',
+  'workouts.exercisesAdapted': 'Exercises have been adapted to avoid stress on your',
+  'workouts.injuryModeActive': 'Injury Mode Active',
+  'workouts.noWorkoutsFound': 'No workouts found',
+  'workouts.clearFilters': 'Clear all filters',
+  
+  // Exercise names
+  'exercise.benchPress': 'Bench Press',
+  'exercise.pullUps': 'Pull-ups',
+  'exercise.dips': 'Dips',
+  'exercise.squats': 'Squats',
+  'exercise.deadlifts': 'Deadlifts',
+  'exercise.lunges': 'Lunges',
+  
+  // Live Training additional
+  'liveTraining.cameraReady': 'Camera Ready',
+  'liveTraining.clickStart': 'Click Start Training and the AI will detect your exercise automatically',
+  'liveTraining.realTimeCoaching': 'Real-time AI coaching and form feedback',
+  'liveTraining.voiceOn': 'Voice feedback on',
+  'liveTraining.voiceOff': 'Voice feedback off',
+  'liveTraining.voiceNotSupported': 'Voice not supported in this browser',
+  
+  // Dashboard additional
+  'dashboard.welcomeBack': 'Welcome back',
+  'dashboard.excellent': 'Excellent',
+  'dashboard.workoutSession': 'Workout Session',
+  'dashboard.noChange': 'No change',
+  
+  // Reports additional
+  'reports.thisWeekShort': 'This Week',
+  'reports.progressOverTime': 'Progress Over Time',
+  'reports.weeklyActivity': 'Weekly Activity',
 }
