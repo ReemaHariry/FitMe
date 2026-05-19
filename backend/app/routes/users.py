@@ -1,17 +1,22 @@
 """
 User Profile Routes
 
-Handles user profile management and onboarding completion.
+Handles user profile management, onboarding completion, and progress photos.
 """
 
-from fastapi import APIRouter, HTTPException, Header, Depends, status
+from fastapi import APIRouter, HTTPException, Header, Depends, status, UploadFile, File, Form
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+from datetime import date
 from app.services.supabase_service import (
     get_supabase_client,
     save_profile,
     get_profile,
-    verify_token
+    verify_token,
+    get_progress_photos,
+    save_progress_photo,
+    delete_progress_photo,
+    upload_progress_photo_to_storage
 )
 
 
@@ -49,6 +54,23 @@ class ProfileDataResponse(BaseModel):
     training_days_per_week: Optional[int]
     preferred_workout_duration: Optional[int]
     onboarding_complete: bool
+
+
+class ProgressPhotoResponse(BaseModel):
+    """Progress photo record"""
+    id: str
+    user_id: str
+    photo_url: str
+    storage_path: str
+    photo_type: str
+    taken_at: str
+    created_at: str
+
+
+class ProgressPhotoUploadResponse(BaseModel):
+    """Response after uploading a progress photo"""
+    message: str
+    photo: ProgressPhotoResponse
 
 
 # ============================================================================
@@ -193,4 +215,166 @@ async def get_user_profile(current_user: dict = Depends(get_current_user)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch profile"
+        )
+
+
+# ============================================================================
+# ENDPOINT: GET /users/progress-photos
+# ============================================================================
+
+@router.get("/progress-photos", response_model=List[ProgressPhotoResponse])
+async def get_user_progress_photos(current_user: dict = Depends(get_current_user)):
+    """
+    Get all progress photos for the current user.
+    
+    Returns photos ordered by created_at DESC (newest first).
+    The frontend will show only the most recent photo for each type.
+    
+    Requires: Authorization header with valid Bearer token
+    """
+    try:
+        user_id = current_user["id"]
+        photos = get_progress_photos(user_id)
+        return [ProgressPhotoResponse(**photo) for photo in photos]
+    except Exception as e:
+        print(f"Failed to fetch progress photos: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch progress photos"
+        )
+
+
+# ============================================================================
+# ENDPOINT: POST /users/progress-photos
+# ============================================================================
+
+@router.post("/progress-photos", response_model=ProgressPhotoUploadResponse)
+async def upload_progress_photo(
+    photo: UploadFile = File(...),
+    photo_type: str = Form(...),
+    taken_at: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Upload a new progress photo.
+    
+    Process:
+    1. Validate photo_type is 'front', 'side', or 'back'
+    2. Validate taken_at is a valid date (YYYY-MM-DD)
+    3. Upload photo to Supabase Storage (private bucket)
+    4. Generate signed URL (expires in 1 year)
+    5. Save record to progress_photos table
+    6. Return the created photo record
+    
+    Args:
+        photo: Image file (JPEG, PNG, WebP)
+        photo_type: 'front', 'side', or 'back'
+        taken_at: Date when photo was taken (YYYY-MM-DD)
+        
+    Requires: Authorization header with valid Bearer token
+    """
+    try:
+        user_id = current_user["id"]
+        
+        # Validate photo_type
+        if photo_type not in ['front', 'side', 'back']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="photo_type must be 'front', 'side', or 'back'"
+            )
+        
+        # Validate taken_at is a valid date
+        try:
+            date.fromisoformat(taken_at)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="taken_at must be a valid date in YYYY-MM-DD format"
+            )
+        
+        # Validate file type
+        if not photo.content_type or not photo.content_type.startswith('image/'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File must be an image (JPEG, PNG, or WebP)"
+            )
+        
+        # Read file bytes
+        file_bytes = await photo.read()
+        
+        # Validate file size (max 5MB)
+        if len(file_bytes) > 5 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File size must be less than 5MB"
+            )
+        
+        # Upload to storage
+        signed_url, storage_path = upload_progress_photo_to_storage(
+            file_bytes=file_bytes,
+            filename=photo.filename or "photo.jpg",
+            user_id=user_id,
+            photo_type=photo_type
+        )
+        
+        # Save record to database
+        photo_record = save_progress_photo(
+            user_id=user_id,
+            photo_url=signed_url,
+            storage_path=storage_path,
+            photo_type=photo_type,
+            taken_at=taken_at
+        )
+        
+        return ProgressPhotoUploadResponse(
+            message="Progress photo uploaded successfully",
+            photo=ProgressPhotoResponse(**photo_record)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Failed to upload progress photo: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload progress photo: {str(e)}"
+        )
+
+
+# ============================================================================
+# ENDPOINT: DELETE /users/progress-photos/{photo_id}
+# ============================================================================
+
+@router.delete("/progress-photos/{photo_id}")
+async def delete_user_progress_photo(
+    photo_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Delete a progress photo.
+    
+    Process:
+    1. Verify photo belongs to current user
+    2. Delete photo from Supabase Storage
+    3. Delete record from progress_photos table
+    
+    Security: Only the photo owner can delete their photos.
+    
+    Requires: Authorization header with valid Bearer token
+    """
+    try:
+        user_id = current_user["id"]
+        delete_progress_photo(photo_id, user_id)
+        return {"message": "Progress photo deleted successfully"}
+    except Exception as e:
+        error_msg = str(e)
+        if "not found" in error_msg.lower() or "unauthorized" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Progress photo not found"
+            )
+        print(f"Failed to delete progress photo: {error_msg}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete progress photo"
         )

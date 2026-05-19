@@ -163,7 +163,14 @@ export default function Dashboard() {
                         {session.session_name}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {session.date_label} • {session.duration_minutes}{t('common.minutes')}
+                        {session.date_label} • {
+                          // FIXED: Show duration properly
+                          session.duration_minutes > 0
+                            ? `${session.duration_minutes} ${t('common.minutes')}`
+                            : session.duration_seconds > 0
+                            ? '< 1 min'
+                            : '—'
+                        }
                         {session.form_score !== null && ` • ${t('common.score')}: ${session.form_score}/100`}
                       </p>
                     </div>

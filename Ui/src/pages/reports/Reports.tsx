@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { 
-  Download, 
   TrendingUp, 
   Award, 
   Target, 
@@ -11,26 +10,26 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { useI18nStore } from '@/app/i18n'
-import { reportsApi, ReportSummary, UserStats } from '@/api/reports'
+import { reportsApi, ReportSummary } from '@/api/reports'
+import { dashboardApi, DashboardStats } from '@/api/dashboard'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import Select from '@/components/ui/Select'
 import ActivityChart from '@/components/charts/ActivityChart'
 import ProgressChart from '@/components/charts/ProgressChart'
 
 export default function Reports() {
   // ============================================================================
-  // STATE - Changed from WorkoutHistory to ReportSummary
+  // STATE - FIXED: Use DashboardStats instead of UserStats
   // ============================================================================
   const [reports, setReports] = useState<ReportSummary[]>([])
-  const [stats, setStats] = useState<UserStats | null>(null)
+  const [stats, setStats] = useState<DashboardStats | null>(null) // FIXED: Changed type
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedPeriod, setSelectedPeriod] = useState('week')
+  // REMOVED: selectedPeriod state (period dropdown removed)
   const { t } = useI18nStore()
 
   // ============================================================================
-  // DATA FETCHING - Changed from localStorage to real API
+  // DATA FETCHING - FIXED: Fetch stats from dashboardApi, not reportsApi
   // ============================================================================
   useEffect(() => {
     loadReports()
@@ -41,10 +40,10 @@ export default function Reports() {
       setLoading(true)
       setError(null)
       
-      // Fetch reports and stats in parallel
+      // FIXED: Fetch reports from reportsApi, stats from dashboardApi
       const [reportsData, statsData] = await Promise.all([
         reportsApi.getAll(),
-        reportsApi.getStats()
+        dashboardApi.getStats() // FIXED: Use dashboardApi for stats
       ])
       
       setReports(reportsData)
@@ -60,12 +59,7 @@ export default function Reports() {
   // ============================================================================
   // HELPER FUNCTIONS
   // ============================================================================
-  const periodOptions = [
-    { value: 'week', label: 'This Week' },
-    { value: 'month', label: 'This Month' },
-    { value: 'quarter', label: 'This Quarter' },
-    { value: 'year', label: 'This Year' },
-  ]
+  // REMOVED: periodOptions array (period dropdown removed)
 
   const formatExerciseType = (type: string): string => {
     // Convert "squat" → "Squat", "push_up" → "Push Up"
@@ -110,27 +104,14 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {t('reports.title')}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {t('reports.description')}
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Select
-            options={periodOptions}
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-          />
-          <Button className="flex items-center">
-            <Download className="w-4 h-4 mr-2" />
-            {t('reports.exportReport')}
-          </Button>
-        </div>
+      {/* Header - FIXED: Removed period dropdown and export button */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          {t('reports.title')}
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          {t('reports.description')}
+        </p>
       </div>
 
       {/* Summary Stats - Changed to use real stats from API */}
@@ -258,7 +239,14 @@ export default function Reports() {
                         {formatExerciseType(report.exercise_type)}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(report.generated_at).toLocaleDateString()} • {Math.round(report.duration_seconds / 60)} {t('reports.minutes')}
+                        {new Date(report.generated_at).toLocaleDateString()} • {
+                          // FIXED: Show duration properly
+                          report.duration_seconds > 60
+                            ? `${Math.round(report.duration_seconds / 60)} ${t('reports.minutes')}`
+                            : report.duration_seconds > 0
+                            ? '< 1 min'
+                            : '—'
+                        }
                       </p>
                     </div>
                     <Link to={`/reports/${report.id}`}>
@@ -355,7 +343,14 @@ export default function Reports() {
                         </Link>
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                        {(report.duration_seconds / 60).toFixed(1)} {t('reports.minutes')}
+                        {
+                          // FIXED: Show duration properly
+                          report.duration_seconds > 60
+                            ? `${(report.duration_seconds / 60).toFixed(1)} ${t('reports.minutes')}`
+                            : report.duration_seconds > 0
+                            ? '< 1 min'
+                            : '—'
+                        }
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getFormScoreBadgeColor(report.form_score)}`}>

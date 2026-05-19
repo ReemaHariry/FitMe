@@ -45,17 +45,25 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
         setError(null)
         const result = await dashboardApi.getWeeklyActivity(weekOffset)
         
+        // FIXED: Add detailed logging to diagnose the issue
+        console.log('ActivityChart API Response:', result)
+        console.log('Days array:', result.days)
+        console.log('Total minutes:', result.total_minutes)
+        
         // Translate day names
         const translatedDays = result.days.map(day => ({
           ...day,
           day: translateDayName(day.day)
         }))
         
+        console.log('Translated days:', translatedDays)
+        
         setData(translatedDays)
         setTotalMinutes(result.total_minutes)
         setAvgMinutes(result.average_minutes_per_active_day)
       } catch (err) {
         console.error('Failed to load weekly activity:', err)
+        console.error('Error details:', err)
         setError('Could not load activity data')
       } finally {
         setLoading(false)

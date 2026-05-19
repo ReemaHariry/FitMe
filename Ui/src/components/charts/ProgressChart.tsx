@@ -44,17 +44,25 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
         setLoading(true)
         const result = await dashboardApi.getProgress(6)
         
+        // FIXED: Add detailed logging to diagnose the issue
+        console.log('ProgressChart API Response:', result)
+        console.log('Months array:', result.months)
+        console.log('Current score:', result.current_score)
+        
         // Translate month names
         const translatedMonths = result.months.map(month => ({
           ...month,
           month: translateMonthName(month.month)
         }))
         
+        console.log('Translated months:', translatedMonths)
+        
         setData(translatedMonths)
         setCurrentScore(result.current_score)
         setImprovement(result.improvement)
       } catch (err) {
         console.error('Failed to load progress data:', err)
+        console.error('Error details:', err)
       } finally {
         setLoading(false)
       }
