@@ -56,6 +56,10 @@ def calculate_form_score(report: dict, total_frames: int) -> int:
     Returns:
         Integer form score from 0 to 100
     """
+    # Check if this is a "no pose detected" report
+    if report.get("no_pose_detected"):
+        return 0  # Return 0 score for sessions with no pose detected
+    
     total_mistakes = report["statistics"]["total_mistakes"]
     performance_rating = report["overall_summary"]["performance_rating"]
     

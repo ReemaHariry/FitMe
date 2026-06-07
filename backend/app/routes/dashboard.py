@@ -53,7 +53,10 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                 "best_streak": 0,
                 "most_practiced_exercise": "none",
                 "sessions_this_week": 0,
-                "improvement_this_month": 0
+                "improvement_this_month": 0,
+                "best_score": 0,  # NEW
+                "best_score_exercise": "none",  # NEW
+                "active_dates_last_30": []  # NEW
             }
         
         # Total sessions and minutes
@@ -65,6 +68,11 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         # Average form score (only from sessions with scores)
         scored = [s["form_score"] for s in sessions if s.get("form_score") is not None]
         average_form_score = round(sum(scored) / len(scored)) if scored else 0
+        
+        # NEW: Best score and exercise
+        best_score = max(scored) if scored else 0
+        best_score_session = max(sessions, key=lambda s: s.get("form_score") or 0) if sessions else None
+        best_score_exercise = best_score_session.get("exercise_type", "none") if best_score_session else "none"
         
         # Most practiced exercise
         exercise_counts = defaultdict(int)
@@ -122,6 +130,12 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         else:
             improvement = 0
         
+        # NEW: Active dates in last 30 days for streak calendar
+        thirty_days_ago = (today - timedelta(days=30)).isoformat()
+        active_dates_last_30 = sorted(list(session_dates & {
+            (today - timedelta(days=i)).isoformat() for i in range(31)
+        }))
+        
         return {
             "total_sessions": total_sessions,
             "completed_sessions": total_sessions,
@@ -131,7 +145,10 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
             "best_streak": best_streak,
             "most_practiced_exercise": most_practiced,
             "sessions_this_week": sessions_this_week,
-            "improvement_this_month": improvement
+            "improvement_this_month": improvement,
+            "best_score": best_score,  # NEW
+            "best_score_exercise": best_score_exercise,  # NEW
+            "active_dates_last_30": active_dates_last_30  # NEW
         }
         
     except Exception as e:

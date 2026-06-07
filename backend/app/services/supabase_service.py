@@ -901,3 +901,95 @@ def upload_progress_photo_to_storage(
     except Exception as e:
         logger.error(f"Failed to upload progress photo: {str(e)}")
         raise Exception(f"Failed to upload progress photo: {str(e)}")
+
+
+# ============================================================================
+# WEIGHT TRACKING FUNCTIONS
+# ============================================================================
+
+def get_weight_logs(user_id: str, limit: int = 10) -> list:
+    """
+    Get weight log history for a user.
+    
+    Returns logs ordered by logged_at ASC (oldest first) for charting.
+    
+    Args:
+        user_id: UUID of the user
+        limit: Maximum number of logs to return (default 10, max 30)
+        
+    Returns:
+        List of weight log dicts ordered by date
+    """
+    supabase = get_supabase_client()
+    
+    # Cap limit at 30
+    limit = min(limit, 30)
+    
+    result = supabase.table("weight_logs").select(
+        "id, weight_kg, logged_at, note, created_at"
+    ).eq("user_id", user_id).order("logged_at", desc=False).limit(limit).execute()
+    
+    return result.data or []
+
+
+def log_weight(user_id: str, weight_kg: float, note: str = None) -> dict:
+    """
+    Log a new weight entry for the user.
+    
+    Args:
+        user_id: UUID of the user
+        weight_kg: Weight in kilograms (must be between 20 and 500)
+        note: Optional note about the weigh-in
+        
+    Returns:
+        Dict containing the created log entry
+        
+    Raises:
+        ValueError: If weight_kg is out of valid range
+    """
+    if weight_kg < 20 or weight_kg > 500:
+        raise ValueError("Weight must be between 20 and 500 kg")
+    
+    supabase = get_supabase_client()
+    from datetime import date
+    
+    log_data = {
+        "user_id": user_id,
+        "weight_kg": weight_kg,
+        "logged_at": date.today().isoformat(),
+        "note": note
+    }
+    
+    result = supabase.table("weight_logs").insert(log_data).execute()
+    
+    if result.data and len(result.data) > 0:
+        return result.data[0]
+    else:
+        raise Exception("Failed to log weight")
+
+
+def delete_weight_log(log_id: str, user_id: str) -> None:
+    """
+    Delete a weight log entry.
+    
+    Security: Verifies the log belongs to the user before deleting.
+    
+    Args:
+        log_id: UUID of the log entry
+        user_id: UUID of the user (for security check)
+        
+    Raises:
+        Exception: If log not found or doesn't belong to user
+    """
+    supabase = get_supabase_client()
+    
+    # Delete with user_id check for security
+    result = supabase.table("weight_logs").delete().eq(
+        "id", log_id
+    ).eq("user_id", user_id).execute()
+    
+    if not result.data or len(result.data) == 0:
+        raise Exception("Weight log not found or unauthorized")
+    
+    logger.info(f"Deleted weight log: {log_id}")
+

@@ -45,9 +45,10 @@ export default function Onboarding() {
     handleSubmit,
     formState: { errors },
     trigger,
-    getValues,
+    watch,
   } = useForm<OnboardingForm>({
     resolver: zodResolver(onboardingSchema),
+    mode: 'onChange', // Validate on change for better UX
     defaultValues: {
       gender: 'male',
       age: 25,
@@ -63,6 +64,8 @@ export default function Onboarding() {
     const fieldsToValidate = steps[currentStep].fields as (keyof OnboardingForm)[]
     const isValid = await trigger(fieldsToValidate)
     
+    console.log('Validating step', currentStep, 'fields:', fieldsToValidate, 'isValid:', isValid, 'errors:', errors)
+    
     if (isValid) {
       if (currentStep < steps.length - 1) {
         setCurrentStep(currentStep + 1)
@@ -77,6 +80,19 @@ export default function Onboarding() {
   }
 
   const onSubmit = async (data: OnboardingForm) => {
+    console.log('Form submitted with data:', data)
+    
+    // Validate current step fields before submitting
+    const fieldsToValidate = steps[currentStep].fields as (keyof OnboardingForm)[]
+    const isValid = await trigger(fieldsToValidate)
+    
+    console.log('Final validation - step:', currentStep, 'isValid:', isValid, 'errors:', errors)
+    
+    if (!isValid) {
+      console.log('Validation failed, stopping submission')
+      return // Stop if validation fails
+    }
+    
     setLoading(true)
     setError(null)
     try {
