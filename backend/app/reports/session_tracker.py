@@ -55,14 +55,17 @@ class SessionTracker:
     mistakes: List[MistakeEvent] = field(default_factory=list)
     total_frames_processed: int = 0
     exercise_detected: Optional[str] = None
-    
+    cooldown_seconds: float = 1.0
+    last_mistake_time: Dict[str, float] = field(default_factory=dict)
+
     def start_session(self, session_name: Optional[str] = None):
         """Initialize session tracking."""
         self.start_time = datetime.now()
         self.session_name = session_name or f"Workout {self.start_time.strftime('%Y-%m-%d %H:%M')}"
         self.mistakes = []
         self.total_frames_processed = 0
-    
+        self.last_mistake_time = {}
+
     def record_mistake(
         self,
         timestamp: float,
@@ -71,18 +74,28 @@ class SessionTracker:
         mistake_type: str,
         mistake_message: str,
         severity: str = "medium"
-    ):
+    ) -> bool:
         """
-        Record a detected mistake.
-        
+        Record a detected mistake, unless the same mistake_type was just
+        recorded within cooldown_seconds (using video/session timestamp,
+        not wall-clock time). This collapses a sustained bad-form condition
+        spanning many consecutive frames into a single event.
+
         Args:
-            timestamp: Seconds from session start
+            timestamp: Seconds from session/video start
             frame_number: Frame number in video/stream
             exercise_type: Type of exercise being performed
             mistake_type: Categorized mistake identifier
             mistake_message: Human-readable description
             severity: "low", "medium", or "high"
+
+        Returns:
+            True if the mistake was recorded, False if suppressed by cooldown.
         """
+        last_time = self.last_mistake_time.get(mistake_type)
+        if last_time is not None and (timestamp - last_time) < self.cooldown_seconds:
+            return False
+
         event = MistakeEvent(
             timestamp=timestamp,
             frame_number=frame_number,
@@ -92,10 +105,13 @@ class SessionTracker:
             severity=severity
         )
         self.mistakes.append(event)
-        
+        self.last_mistake_time[mistake_type] = timestamp
+
         # Track the exercise type
         if not self.exercise_detected:
             self.exercise_detected = exercise_type
+
+        return True
     
     def increment_frame_count(self):
         """Increment the total frames processed counter."""
@@ -173,3 +189,4 @@ class SessionTracker:
         self.start_time = None
         self.end_time = None
         self.exercise_detected = None
+        self.last_mistake_time = {}
