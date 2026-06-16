@@ -120,7 +120,13 @@ export default function Profile() {
     setLoading(true)
     try {
       const { name, email, ...profileData } = data
-      updateProfile(profileData)
+      // FIXED: Add missing gender and experienceLevel fields
+      const completeProfileData = {
+        ...profileData,
+        gender: (user?.profile?.gender as 'male' | 'female') || 'male',
+        experienceLevel: (user?.profile?.experienceLevel as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
+      }
+      updateProfile(completeProfileData)
       setIsEditing(false)
     } catch (error) {
       console.error('Failed to update profile:', error)

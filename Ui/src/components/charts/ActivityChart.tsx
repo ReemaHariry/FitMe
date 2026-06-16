@@ -34,7 +34,7 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
   const [data, setData] = useState<WeeklyDay[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [weekOffset, setWeekOffset] = useState(0)
+  const [weekOffset] = useState(0) // FIXED: Removed unused setWeekOffset
   const [totalMinutes, setTotalMinutes] = useState(0)
   const [avgMinutes, setAvgMinutes] = useState(0)
 
@@ -45,25 +45,17 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
         setError(null)
         const result = await dashboardApi.getWeeklyActivity(weekOffset)
         
-        // FIXED: Add detailed logging to diagnose the issue
-        console.log('ActivityChart API Response:', result)
-        console.log('Days array:', result.days)
-        console.log('Total minutes:', result.total_minutes)
-        
         // Translate day names
         const translatedDays = result.days.map(day => ({
           ...day,
           day: translateDayName(day.day)
         }))
         
-        console.log('Translated days:', translatedDays)
-        
         setData(translatedDays)
         setTotalMinutes(result.total_minutes)
         setAvgMinutes(result.average_minutes_per_active_day)
       } catch (err) {
         console.error('Failed to load weekly activity:', err)
-        console.error('Error details:', err)
         setError('Could not load activity data')
       } finally {
         setLoading(false)
@@ -162,7 +154,7 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
             <LabelList
               dataKey="minutes"
               position="top"
-              formatter={(val: number) => val > 0 ? `${val}m` : ''}
+              formatter={(val: any) => val > 0 ? `${val}m` : ''} // FIXED: Changed to any for compatibility
               style={{ fill: '#22c55e', fontSize: '11px', fontWeight: '500' }}
             />
           </Bar>
