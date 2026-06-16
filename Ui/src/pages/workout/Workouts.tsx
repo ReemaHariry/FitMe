@@ -14,7 +14,7 @@ import { SmartModeBar } from "../../components/workouts/SmartModeBar";
 import { KidsAvatar } from "../../components/workouts/KidsAvatar";
 import { PregnancyWorkoutZone } from "../../components/workouts/PregnancyWorkoutZone";
 import { AlertTriangle, X, Search } from "lucide-react";
-import { INJURY_DATA } from "../../data/injuryData";
+import { INJURY_DATA, type InjuryType } from "../../data/injuryData"; // FIXED: Import InjuryType
 
 // All workouts combined — engine filters by isKidsWorkout flag
 const ALL_WORKOUTS: Workout[] = [...WORKOUTS, ...KIDS_WORKOUTS];
@@ -82,7 +82,7 @@ export default function Workouts() {
 
   // Check if injury mode is active
   const hasInjurySelected = filters.injuryMode !== "none";
-  const injuryLabel = hasInjurySelected ? INJURY_DATA[filters.injuryMode].label : "";
+  const injuryLabel = hasInjurySelected ? INJURY_DATA[filters.injuryMode as InjuryType]?.label ?? "" : ""; // FIXED: Type assertion and safety check
 
   return (
     <div className="space-y-6">

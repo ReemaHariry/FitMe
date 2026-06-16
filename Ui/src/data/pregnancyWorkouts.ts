@@ -4,17 +4,13 @@
  * Following ACOG guidelines for exercise during pregnancy
  */
 
-export interface PregnancyExercise {
-  name: string;
-  benefit: string;
-  emoji: string;
-  videoUrl: string;
-  sets: number;
-  reps: string | number;
-  restSeconds: number;
-  steps: string[];
-  tips: string[];
-}
+import { PregnancyExercise } from "../types/workout.types"; // FIXED: Import PregnancyExercise type
+
+// FIXED: Re-export PregnancyExercise so other files can import it
+export type { PregnancyExercise };
+
+// REMOVED: Duplicate interface definition (now using the one from workout.types.ts)
+// export interface PregnancyExercise { ... }
 
 export interface PregnancyCategory {
   id: string;

@@ -54,6 +54,7 @@ class SessionTracker:
     end_time: Optional[datetime] = None
     mistakes: List[MistakeEvent] = field(default_factory=list)
     total_frames_processed: int = 0
+    frames_with_pose: int = 0  # NEW: Track frames where pose was detected
     exercise_detected: Optional[str] = None
     
     def start_session(self, session_name: Optional[str] = None):
@@ -62,6 +63,7 @@ class SessionTracker:
         self.session_name = session_name or f"Workout {self.start_time.strftime('%Y-%m-%d %H:%M')}"
         self.mistakes = []
         self.total_frames_processed = 0
+        self.frames_with_pose = 0  # NEW: Reset pose counter
     
     def record_mistake(
         self,
@@ -100,6 +102,10 @@ class SessionTracker:
     def increment_frame_count(self):
         """Increment the total frames processed counter."""
         self.total_frames_processed += 1
+    
+    def increment_pose_count(self):
+        """Increment counter for frames where a valid pose was detected."""
+        self.frames_with_pose += 1
     
     def end_session(self):
         """Mark session as ended."""
@@ -160,6 +166,7 @@ class SessionTracker:
             "duration_seconds": self.get_duration_seconds(),
             "exercise_detected": self.exercise_detected,
             "total_frames_processed": self.total_frames_processed,
+            "frames_with_pose": self.frames_with_pose,  # NEW: Include pose count
             "total_mistakes": self.get_mistake_count(),
             "mistakes": [m.to_dict() for m in self.mistakes],
             "mistake_frequency": self.get_mistake_frequency(),
@@ -170,6 +177,7 @@ class SessionTracker:
         """Clear all session data (useful for reusing tracker instance)."""
         self.mistakes = []
         self.total_frames_processed = 0
+        self.frames_with_pose = 0  # NEW: Reset pose counter
         self.start_time = None
         self.end_time = None
         self.exercise_detected = None

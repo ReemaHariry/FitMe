@@ -231,8 +231,13 @@ async def end_session(
         performance_rating = report["overall_summary"]["performance_rating"]
         total_mistakes = report["statistics"]["total_mistakes"]
         duration_seconds = session_data["duration_seconds"]
-        # Use detected exercise or fall back to requested exercise name
-        exercise_detected = session_data.get("exercise_detected") or request.exercise_name
+        
+        # Determine exercise name with proper fallback logic
+        # Priority: detected > requested > "Unknown"
+        detected_exercise = session_data.get("exercise_detected")
+        requested_exercise = request.exercise_name if request.exercise_name and request.exercise_name.strip() and request.exercise_name.lower() != "unknown" else None
+        
+        exercise_detected = detected_exercise or requested_exercise or "Unknown"
         
         # Save report to database
         supabase = get_supabase_client()

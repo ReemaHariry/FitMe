@@ -33,7 +33,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        {...props}
+        {...(props as any)} // FIXED: Cast to any to avoid motion props conflict
       >
         {loading ? (
           <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />

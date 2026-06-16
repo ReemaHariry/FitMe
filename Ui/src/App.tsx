@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from './app/store'
 import { useThemeStore } from './app/theme'
+import { checkSessionReminder } from './utils/sessionReminders'
 import Layout from './components/layout/Layout'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -29,6 +30,18 @@ function App() {
     }
     initAuth()
   }, [checkAuth])
+
+  // ADDED: Check session reminders after auth is verified
+  useEffect(() => {
+    if (authChecked && isAuthenticated && user?.onboarding_complete) {
+      // Wait a bit for the app to fully load before checking reminders
+      const timer = setTimeout(() => {
+        checkSessionReminder()
+      }, 3000) // 3 second delay for better UX
+      
+      return () => clearTimeout(timer)
+    }
+  }, [authChecked, isAuthenticated, user?.onboarding_complete])
 
   // ADDED: Show loading while checking auth to prevent flash
   if (!authChecked) {

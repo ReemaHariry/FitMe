@@ -631,7 +631,7 @@ function PregnancyExerciseModal({
                 How to Perform
               </h3>
               <ol className="space-y-3">
-                {exercise.steps.map((step, i) => (
+                {exercise.steps?.map((step: string, i: number) => ( // FIXED: Added type annotations
                   <li key={i} className="flex gap-3 text-gray-700 dark:text-gray-300">
                     <span
                       className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold text-white"
@@ -651,7 +651,7 @@ function PregnancyExerciseModal({
                 Pregnancy-Safe Tips
               </h3>
               <ul className="space-y-2">
-                {exercise.tips.map((tip, i) => (
+                {exercise.tips?.map((tip: string, i: number) => ( // FIXED: Added type annotations
                   <li
                     key={i}
                     className="flex gap-3 text-gray-700 dark:text-gray-300"

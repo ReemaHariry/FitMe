@@ -6,6 +6,7 @@ export interface User {
   id: string
   name: string
   email: string
+  created_at?: string  // ADDED: For "Member Since" calculation
   onboarding_complete: boolean  // FIXED: Match backend field name
   profile?: {
     gender: 'male' | 'female'

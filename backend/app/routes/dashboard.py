@@ -27,12 +27,21 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     try:
         supabase = get_supabase_client()
         
+        # FIXED: Add detailed logging
+        logger.info(f"Fetching dashboard stats for user: {user_id}")
+        
         # Fetch all completed sessions for this user
         result = supabase.table("exercise_sessions").select(
             "id, exercise_type, duration_seconds, form_score, status, started_at, created_at"
         ).eq("user_id", user_id).eq("status", "completed").order("created_at", desc=False).execute()
         
         sessions = result.data or []
+        
+        # FIXED: Log the raw data to diagnose
+        logger.info(f"Found {len(sessions)} completed sessions")
+        if sessions:
+            logger.info(f"First session sample: {sessions[0]}")
+            logger.info(f"Duration values: {[s.get('duration_seconds') for s in sessions[:3]]}")
         
         if not sessions:
             return {
@@ -44,17 +53,26 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                 "best_streak": 0,
                 "most_practiced_exercise": "none",
                 "sessions_this_week": 0,
-                "improvement_this_month": 0
+                "improvement_this_month": 0,
+                "best_score": 0,  # NEW
+                "best_score_exercise": "none",  # NEW
+                "active_dates_last_30": []  # NEW
             }
         
         # Total sessions and minutes
         total_sessions = len(sessions)
-        total_seconds = sum(s.get("duration_seconds") or 0 for s in sessions)
+        # FIXED: Handle None and 0 values more robustly
+        total_seconds = sum(float(s.get("duration_seconds") or 0) for s in sessions if s.get("duration_seconds") is not None)
         total_minutes = round(total_seconds / 60)
         
         # Average form score (only from sessions with scores)
         scored = [s["form_score"] for s in sessions if s.get("form_score") is not None]
         average_form_score = round(sum(scored) / len(scored)) if scored else 0
+        
+        # NEW: Best score and exercise
+        best_score = max(scored) if scored else 0
+        best_score_session = max(sessions, key=lambda s: s.get("form_score") or 0) if sessions else None
+        best_score_exercise = best_score_session.get("exercise_type", "none") if best_score_session else "none"
         
         # Most practiced exercise
         exercise_counts = defaultdict(int)
@@ -112,6 +130,12 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         else:
             improvement = 0
         
+        # NEW: Active dates in last 30 days for streak calendar
+        thirty_days_ago = (today - timedelta(days=30)).isoformat()
+        active_dates_last_30 = sorted(list(session_dates & {
+            (today - timedelta(days=i)).isoformat() for i in range(31)
+        }))
+        
         return {
             "total_sessions": total_sessions,
             "completed_sessions": total_sessions,
@@ -121,7 +145,10 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
             "best_streak": best_streak,
             "most_practiced_exercise": most_practiced,
             "sessions_this_week": sessions_this_week,
-            "improvement_this_month": improvement
+            "improvement_this_month": improvement,
+            "best_score": best_score,  # NEW
+            "best_score_exercise": best_score_exercise,  # NEW
+            "active_dates_last_30": active_dates_last_30  # NEW
         }
         
     except Exception as e:
@@ -146,14 +173,23 @@ async def get_weekly_activity(
         monday = today - timedelta(days=today.weekday()) - timedelta(weeks=week_offset)
         sunday = monday + timedelta(days=6)
         
-        # Fetch sessions in this week
+        # FIXED: Add detailed logging
+        logger.info(f"Fetching weekly activity for user {user_id}, week: {monday} to {sunday}")
+        
+        # FIXED: Fetch sessions in this week with timezone-safe date comparison
         result = supabase.table("exercise_sessions").select(
             "duration_seconds, started_at, created_at"
         ).eq("user_id", user_id).eq("status", "completed").gte(
-            "created_at", monday.isoformat()
-        ).lte("created_at", (sunday + timedelta(days=1)).isoformat()).execute()
+            "created_at", f"{monday.isoformat()}T00:00:00"
+        ).lte("created_at", f"{sunday.isoformat()}T23:59:59").execute()
         
         sessions = result.data or []
+        
+        # FIXED: Log the raw data
+        logger.info(f"Found {len(sessions)} sessions in this week")
+        if sessions:
+            logger.info(f"Sample session: {sessions[0]}")
+            logger.info(f"Duration values: {[s.get('duration_seconds') for s in sessions]}")
         
         # Build day buckets
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -163,7 +199,8 @@ async def get_weekly_activity(
             day_date = monday + timedelta(days=i)
             day_str = day_date.isoformat()
             day_sessions = [s for s in sessions if s.get("created_at", "")[:10] == day_str]
-            minutes = round(sum(s.get("duration_seconds") or 0 for s in day_sessions) / 60)
+            # FIXED: Handle None and 0 values, ensure non-negative
+            minutes = max(0, round(sum(float(s.get("duration_seconds") or 0) for s in day_sessions) / 60))
             days.append({
                 "day": day_names[i],
                 "date": day_str,
@@ -218,13 +255,18 @@ async def get_progress(
         oldest = target_months[0]
         oldest_str = f"{oldest[0]:04d}-{oldest[1]:02d}-01"
         
+        # FIXED: Fetch all sessions with form_score (not null)
+        # Note: Supabase Python client uses is_() for NULL checks
         result = supabase.table("exercise_sessions").select(
             "form_score, created_at"
         ).eq("user_id", user_id).eq("status", "completed").gte(
             "created_at", oldest_str
-        ).not_.is_("form_score", "null").execute()
+        ).execute()
         
-        sessions = result.data or []
+        # FIXED: Filter out null scores in Python instead of in query
+        sessions = [s for s in (result.data or []) if s.get("form_score") is not None]
+        
+        logger.info(f"Found {len(sessions)} sessions with form_score in date range")
         
         # Group by month
         monthly_data = []

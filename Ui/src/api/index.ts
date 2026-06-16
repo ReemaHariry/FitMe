@@ -33,3 +33,6 @@ export * from './sessions'
 
 // Export all dashboard-related functions and types
 export * from './dashboard'
+
+// NEW: Export all weight-related functions and types
+export * from './weight'
