@@ -24,6 +24,9 @@ export interface DashboardStats {
   most_practiced_exercise: string
   sessions_this_week: number
   improvement_this_month: number
+  best_score: number  // NEW
+  best_score_exercise: string  // NEW
+  active_dates_last_30: string[]  // NEW
 }
 
 export interface WeeklyDay {

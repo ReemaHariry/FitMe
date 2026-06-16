@@ -16,6 +16,9 @@ const translations = {
   ar,
 } as const
 
+// FIXED: Add Record<string, string> to allow string indexing
+type TranslationsType = Record<string, Record<string, string>>;
+
 // Initialize language from localStorage
 const getInitialLanguage = (): Language => {
   if (typeof window !== 'undefined') {
@@ -68,8 +71,8 @@ export const useI18nStore = create<I18nState>()((set, get) => {
     
     t: (key: string) => {
       const { language } = get()
-      const translation = translations[language] as Record<string, string>
-      return translation[key] || translations.en[key] || key
+      const translation = (translations as TranslationsType)[language] // FIXED: Cast to allow string indexing
+      return translation[key] || (translations as TranslationsType).en[key] || key
     },
   }
 })

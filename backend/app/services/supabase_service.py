@@ -51,11 +51,18 @@ def get_supabase_client() -> Client:
                 "Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in .env file"
             )
         
+        # FIXED: Log to verify we're using the service role key
+        logger.info(f"Initializing Supabase client with URL: {settings.supabase_url}")
+        logger.info(f"Using service_role key: {settings.supabase_service_key[:20]}...")
+        
         # Create client with positional arguments (compatible with all versions)
+        # IMPORTANT: The service_role key should bypass RLS automatically
         _supabase_client = create_client(
             settings.supabase_url,
             settings.supabase_service_key
         )
+        
+        logger.info("✅ Supabase client initialized successfully")
     
     return _supabase_client
 
@@ -618,32 +625,38 @@ async def update_session_after_analysis(
     """
     Update session record with analysis results.
     
+    FIXED: Ensure duration_seconds is properly saved as float
+    
     Args:
         session_id: UUID of the session
         form_score: Calculated form score (0-100)
         performance_rating: Rating from report
         total_mistakes: Total mistakes detected
         total_frames_processed: Number of frames analyzed
-        duration_seconds: Session duration
+        duration_seconds: Session duration (MUST be > 0)
         exercise_detected: Detected exercise type
         status: Final status (default: "completed")
     """
     supabase = get_supabase_client()
+    
+    # FIXED: Explicitly convert to float and log the value
+    duration_float = float(duration_seconds)
+    logger.info(f"Updating session {session_id} with duration={duration_float}s")
     
     update_data = {
         "form_score": form_score,
         "performance_rating": performance_rating,
         "total_mistakes": total_mistakes,
         "total_frames_processed": total_frames_processed,
-        "duration_seconds": duration_seconds,
+        "duration_seconds": duration_float,  # FIXED: Ensure it's a float
         "exercise_type": exercise_detected,
         "status": status,
         "ended_at": datetime.now().isoformat()
     }
     
     try:
-        supabase.table("exercise_sessions").update(update_data).eq("id", session_id).execute()
-        logger.info(f"Session {session_id} updated with analysis results")
+        result = supabase.table("exercise_sessions").update(update_data).eq("id", session_id).execute()
+        logger.info(f"Session update result: {result.data}")
     except Exception as e:
         logger.error(f"Failed to update session {session_id}: {str(e)}")
         # Don't raise - report is already saved, session update failing is not critical
@@ -723,3 +736,260 @@ async def get_session_status(session_id: str, user_id: str) -> Optional[dict]:
     if result.data and len(result.data) > 0:
         return result.data[0]
     return None
+
+
+# ============================================================================
+# PROGRESS PHOTOS FUNCTIONS
+# ============================================================================
+
+def get_progress_photos(user_id: str) -> list:
+    """
+    Get all progress photos for a user.
+    
+    Returns photos ordered by created_at DESC (newest first).
+    For each photo_type, the frontend will show only the most recent one.
+    
+    Args:
+        user_id: UUID of the user
+        
+    Returns:
+        List of progress photo dicts
+    """
+    supabase = get_supabase_client()
+    
+    result = supabase.table("progress_photos").select(
+        "id, user_id, photo_url, storage_path, photo_type, taken_at, created_at"
+    ).eq("user_id", user_id).order("created_at", desc=True).execute()
+    
+    return result.data or []
+
+
+def save_progress_photo(
+    user_id: str,
+    photo_url: str,
+    storage_path: str,
+    photo_type: str,
+    taken_at: str
+) -> dict:
+    """
+    Save a progress photo record to the database.
+    
+    Args:
+        user_id: UUID of the user
+        photo_url: Signed URL to access the photo
+        storage_path: Path in storage bucket
+        photo_type: 'front', 'side', or 'back'
+        taken_at: Date when photo was taken (YYYY-MM-DD)
+        
+    Returns:
+        Dict containing the created photo record
+    """
+    supabase = get_supabase_client()
+    
+    photo_data = {
+        "user_id": user_id,
+        "photo_url": photo_url,
+        "storage_path": storage_path,
+        "photo_type": photo_type,
+        "taken_at": taken_at
+    }
+    
+    result = supabase.table("progress_photos").insert(photo_data).execute()
+    
+    if result.data and len(result.data) > 0:
+        return result.data[0]
+    else:
+        raise Exception("Failed to save progress photo")
+
+
+def delete_progress_photo(photo_id: str, user_id: str) -> None:
+    """
+    Delete a progress photo from both storage and database.
+    
+    Security: Verifies the photo belongs to the user before deleting.
+    
+    Args:
+        photo_id: UUID of the photo
+        user_id: UUID of the user (for security check)
+        
+    Raises:
+        Exception: If photo not found or doesn't belong to user
+    """
+    supabase = get_supabase_client()
+    
+    # First, get the photo to verify ownership and get storage_path
+    photo_result = supabase.table("progress_photos").select(
+        "storage_path"
+    ).eq("id", photo_id).eq("user_id", user_id).execute()
+    
+    if not photo_result.data or len(photo_result.data) == 0:
+        raise Exception("Photo not found or unauthorized")
+    
+    storage_path = photo_result.data[0]["storage_path"]
+    
+    # Delete from storage
+    try:
+        supabase.storage.from_("progress-photos").remove([storage_path])
+        logger.info(f"Deleted photo from storage: {storage_path}")
+    except Exception as e:
+        logger.error(f"Failed to delete from storage: {str(e)}")
+        # Continue with database deletion even if storage deletion fails
+    
+    # Delete from database
+    supabase.table("progress_photos").delete().eq("id", photo_id).eq("user_id", user_id).execute()
+    logger.info(f"Deleted photo record: {photo_id}")
+
+
+def upload_progress_photo_to_storage(
+    file_bytes: bytes,
+    filename: str,
+    user_id: str,
+    photo_type: str
+) -> tuple[str, str]:
+    """
+    Upload a progress photo to Supabase Storage (PRIVATE bucket).
+    
+    Files are organized by user_id and photo_type for easy management.
+    
+    Args:
+        file_bytes: Raw bytes of the image file
+        filename: Original filename with extension
+        user_id: UUID string for namespacing
+        photo_type: 'front', 'side', or 'back'
+        
+    Returns:
+        tuple: (signed_url, storage_path)
+        - signed_url: Temporary URL to access the photo (expires in 1 year)
+        - storage_path: Path in storage bucket
+        
+    Raises:
+        Exception: If upload fails
+    """
+    supabase = get_supabase_client()
+    
+    # Generate unique storage path
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Path format: user_id/photo_type_timestamp_filename.jpg
+    storage_path = f"{user_id}/{photo_type}_{timestamp}_{filename}"
+    
+    try:
+        # Upload to private bucket
+        supabase.storage.from_("progress-photos").upload(
+            path=storage_path,
+            file=file_bytes,
+            file_options={
+                "content-type": "image/jpeg",
+                "upsert": "true"  # Replace if exists
+            }
+        )
+        
+        logger.info(f"Progress photo uploaded to storage: {storage_path}")
+        
+        # Generate signed URL (expires in 1 year)
+        signed_url_response = supabase.storage.from_("progress-photos").create_signed_url(
+            storage_path,
+            3600 * 24 * 365  # 1 year in seconds
+        )
+        
+        if signed_url_response and "signedURL" in signed_url_response:
+            signed_url = signed_url_response["signedURL"]
+        else:
+            raise Exception("Failed to generate signed URL")
+        
+        return signed_url, storage_path
+        
+    except Exception as e:
+        logger.error(f"Failed to upload progress photo: {str(e)}")
+        raise Exception(f"Failed to upload progress photo: {str(e)}")
+
+
+# ============================================================================
+# WEIGHT TRACKING FUNCTIONS
+# ============================================================================
+
+def get_weight_logs(user_id: str, limit: int = 10) -> list:
+    """
+    Get weight log history for a user.
+    
+    Returns logs ordered by logged_at ASC (oldest first) for charting.
+    
+    Args:
+        user_id: UUID of the user
+        limit: Maximum number of logs to return (default 10, max 30)
+        
+    Returns:
+        List of weight log dicts ordered by date
+    """
+    supabase = get_supabase_client()
+    
+    # Cap limit at 30
+    limit = min(limit, 30)
+    
+    result = supabase.table("weight_logs").select(
+        "id, weight_kg, logged_at, note, created_at"
+    ).eq("user_id", user_id).order("logged_at", desc=False).limit(limit).execute()
+    
+    return result.data or []
+
+
+def log_weight(user_id: str, weight_kg: float, note: str = None) -> dict:
+    """
+    Log a new weight entry for the user.
+    
+    Args:
+        user_id: UUID of the user
+        weight_kg: Weight in kilograms (must be between 20 and 500)
+        note: Optional note about the weigh-in
+        
+    Returns:
+        Dict containing the created log entry
+        
+    Raises:
+        ValueError: If weight_kg is out of valid range
+    """
+    if weight_kg < 20 or weight_kg > 500:
+        raise ValueError("Weight must be between 20 and 500 kg")
+    
+    supabase = get_supabase_client()
+    from datetime import date
+    
+    log_data = {
+        "user_id": user_id,
+        "weight_kg": weight_kg,
+        "logged_at": date.today().isoformat(),
+        "note": note
+    }
+    
+    result = supabase.table("weight_logs").insert(log_data).execute()
+    
+    if result.data and len(result.data) > 0:
+        return result.data[0]
+    else:
+        raise Exception("Failed to log weight")
+
+
+def delete_weight_log(log_id: str, user_id: str) -> None:
+    """
+    Delete a weight log entry.
+    
+    Security: Verifies the log belongs to the user before deleting.
+    
+    Args:
+        log_id: UUID of the log entry
+        user_id: UUID of the user (for security check)
+        
+    Raises:
+        Exception: If log not found or doesn't belong to user
+    """
+    supabase = get_supabase_client()
+    
+    # Delete with user_id check for security
+    result = supabase.table("weight_logs").delete().eq(
+        "id", log_id
+    ).eq("user_id", user_id).execute()
+    
+    if not result.data or len(result.data) == 0:
+        raise Exception("Weight log not found or unauthorized")
+    
+    logger.info(f"Deleted weight log: {log_id}")
+

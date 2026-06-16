@@ -15,15 +15,29 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       transition: { duration: 0.2 }
     } : {}
 
+    // FIXED: Conditional rendering based on hover prop
+    if (hover) {
+      return (
+        <motion.div
+          ref={ref}
+          className={cn('card', className)}
+          whileHover={{ scale: 1.02, y: -2 }}
+          transition={{ duration: 0.2 }}
+          {...(props as any)} // FIXED: Cast to avoid motion props conflict
+        >
+          {children}
+        </motion.div>
+      )
+    }
+
     return (
-      <Component
+      <div
         ref={ref}
         className={cn('card', className)}
-        {...motionProps}
         {...props}
       >
         {children}
-      </Component>
+      </div>
     )
   }
 )

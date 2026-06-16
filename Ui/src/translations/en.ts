@@ -347,8 +347,4 @@ export const en = {
   'dashboard.workoutSession': 'Workout Session',
   'dashboard.noChange': 'No change',
   
-  // Reports additional
-  'reports.thisWeekShort': 'This Week',
-  'reports.progressOverTime': 'Progress Over Time',
-  'reports.weeklyActivity': 'Weekly Activity',
 }

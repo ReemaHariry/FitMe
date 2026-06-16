@@ -139,7 +139,6 @@ export default function LiveTraining() {
           >
             <Upload className="w-4 h-4 me-2" />
             {t('nav.uploadVideo')}
-            Upload Video
           </Button>
         </div>
       </div>

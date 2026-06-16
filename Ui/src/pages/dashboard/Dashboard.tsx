@@ -10,6 +10,14 @@ import StatsCard from '@/components/cards/StatsCard'
 import ActivityChart from '@/components/charts/ActivityChart'
 import ProgressChart from '@/components/charts/ProgressChart'
 import { dashboardApi, type DashboardStats, type RecentSession } from '@/api/dashboard'
+import { weightApi, type WeightLog } from '@/api/weight'
+import { usersApi, type ProfileDataResponse } from '@/api/users'
+import MotivationCard from '@/components/dashboard/MotivationCard'
+import QuickStatsCards from '@/components/dashboard/QuickStatsCards'
+import WeightTracker from '@/components/dashboard/WeightTracker'
+import AchievementBadges from '@/components/dashboard/AchievementBadges'
+import LastSessionSummary from '@/components/dashboard/LastSessionSummary'
+import StreakCalendar from '@/components/dashboard/StreakCalendar'
 
 export default function Dashboard() {
   const { t } = useI18nStore()
@@ -21,6 +29,8 @@ export default function Dashboard() {
   // ============================================================================
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null)
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([])
+  const [weightLogs, setWeightLogs] = useState<WeightLog[]>([])
+  const [profile, setProfile] = useState<ProfileDataResponse | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
 
   // Load dashboard data on mount
@@ -28,12 +38,16 @@ export default function Dashboard() {
     const loadDashboard = async () => {
       try {
         setStatsLoading(true)
-        const [stats, recent] = await Promise.all([
+        const [stats, recent, weights, userProfile] = await Promise.all([
           dashboardApi.getStats(),
-          dashboardApi.getRecentSessions(3)
+          dashboardApi.getRecentSessions(3),
+          weightApi.getLogs(10),
+          usersApi.getProfile()
         ])
         setDashStats(stats)
         setRecentSessions(recent)
+        setWeightLogs(weights)
+        setProfile(userProfile)
       } catch (err) {
         console.error('Failed to load dashboard:', err)
       } finally {
@@ -43,6 +57,11 @@ export default function Dashboard() {
 
     loadDashboard()
   }, [])
+
+  // Handler for weight log updates
+  const handleWeightLogsUpdate = (updatedLogs: WeightLog[]) => {
+    setWeightLogs(updatedLogs)
+  }
 
   // ============================================================================
   // STATS ARRAY NOW USES REAL DATA
@@ -101,25 +120,59 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
+      {/* Motivation Card */}
+      {!statsLoading && dashStats && profile && (
+        <MotivationCard
+          sessionsThisWeek={dashStats.sessions_this_week}
+          weeklyGoal={profile.training_days_per_week || 3}
+        />
+      )}
+
       {/* Stats Grid */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
         {stats.map((stat, index) => (
           <StatsCard key={stat.title} {...stat} delay={index * 0.1} />
         ))}
+        {!statsLoading && dashStats && profile && (
+          <QuickStatsCards
+            bestScore={dashStats.best_score}
+            sessionsThisWeek={dashStats.sessions_this_week}
+            weeklyGoal={profile.training_days_per_week || 3}
+          />
+        )}
       </motion.div>
+
+      {/* Weight Tracker */}
+      {!statsLoading && profile && (
+        <WeightTracker
+          initialLogs={weightLogs}
+          fitnessGoal={profile.fitness_goal || undefined}
+          onLogsUpdate={handleWeightLogsUpdate}
+        />
+      )}
+
+      {/* Achievement Badges */}
+      {!statsLoading && dashStats && (
+        <AchievementBadges stats={dashStats} weightLogs={weightLogs} />
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 gap-6">
+        {/* Last Session Summary */}
+        {!statsLoading && recentSessions.length > 0 && (
+          <LastSessionSummary session={recentSessions[0]} />
+        )}
+
         {/* Session History */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
         >
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -163,7 +216,14 @@ export default function Dashboard() {
                         {session.session_name}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {session.date_label} • {session.duration_minutes}{t('common.minutes')}
+                        {session.date_label} • {
+                          // FIXED: Show duration properly
+                          session.duration_minutes > 0
+                            ? `${session.duration_minutes} ${t('common.minutes')}`
+                            : session.duration_seconds > 0
+                            ? '< 1 min'
+                            : '—'
+                        }
                         {session.form_score !== null && ` • ${t('common.score')}: ${session.form_score}/100`}
                       </p>
                     </div>
@@ -186,7 +246,7 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
         >
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -202,7 +262,7 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
         >
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -214,6 +274,11 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Streak Calendar */}
+      {!statsLoading && dashStats && (
+        <StreakCalendar activeDates={dashStats.active_dates_last_30} />
+      )}
     </div>
   )
 }

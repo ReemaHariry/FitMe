@@ -58,10 +58,13 @@ export function WorkoutDetailModal({
 
   const isKidsMode = userSettings.mode === "child";
 
-  // CHANGED: Legacy injuryMode for InjuryBanner - now just checks injuryType directly
-  const legacyInjuryMode =
+  // FIXED: Cast injuryType to InjuryMode for legacy InjuryBanner compatibility
+  const legacyInjuryMode: "none" | "knee" | "back" | "shoulder" =
     userSettings.injuryType && userSettings.injuryType !== "none"
-      ? userSettings.injuryType
+      ? (userSettings.injuryType.includes('knee') ? 'knee' 
+         : userSettings.injuryType.includes('back') ? 'back'
+         : userSettings.injuryType.includes('shoulder') ? 'shoulder'
+         : 'none')
       : "none";
 
   return (

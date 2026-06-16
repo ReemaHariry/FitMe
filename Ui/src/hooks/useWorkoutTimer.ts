@@ -28,7 +28,7 @@ export function useWorkoutTimer(
 ): UseWorkoutTimerReturn {
   const [timeRemaining, setTimeRemaining] = useState(durationSeconds);
   const [status, setStatus] = useState<TimerStatus>("idle");
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // FIXED: Use ReturnType instead of NodeJS.Timeout for browser compatibility
 
   // Clear interval on unmount
   useEffect(() => {

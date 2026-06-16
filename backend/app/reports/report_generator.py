@@ -195,6 +195,14 @@ class ReportGenerator:
         Returns:
             Complete structured report ready for JSON serialization
         """
+        # Check if no pose was detected throughout the session
+        frames_with_pose = session_data.get("frames_with_pose", 0)
+        total_frames = session_data.get("total_frames_processed", 0)
+        
+        # If no poses detected or very few poses (less than 10% of frames)
+        if frames_with_pose == 0 or (total_frames > 0 and frames_with_pose < total_frames * 0.1):
+            return cls.generate_no_pose_report(session_data)
+        
         # Generate mistake summaries
         mistake_summaries = cls.generate_mistake_summary(session_data)
 
@@ -227,6 +235,55 @@ class ReportGenerator:
 
         return report
 
+    @classmethod
+    def generate_no_pose_report(cls, session_data: dict) -> Dict:
+        """
+        Generate a special report when no pose was detected during the session.
+        
+        This happens when the user was not in the camera frame or too far away.
+        
+        Args:
+            session_data: Session summary from SessionTracker
+            
+        Returns:
+            Special "no pose detected" report
+        """
+        return {
+            "session_info": {
+                "session_id": session_data.get("session_id"),
+                "user_id": session_data.get("user_id"),
+                "session_name": session_data.get("session_name"),
+                "start_time": session_data.get("start_time"),
+                "end_time": session_data.get("end_time"),
+                "duration_seconds": session_data.get("duration_seconds"),
+                "duration_formatted": cls.format_timestamp(session_data.get("duration_seconds", 0)),
+                "exercise_detected": None,
+                "total_frames_processed": session_data.get("total_frames_processed")
+            },
+            "overall_summary": {
+                "performance_rating": "no_pose_detected",
+                "message": (
+                    "We couldn't detect your body in the camera frame during this session. "
+                    "For the best results, please make sure you're standing where your full body is visible "
+                    "in the camera. Try standing a bit further back so we can see you from head to toe!"
+                ),
+                "total_mistakes": 0,
+                "unique_mistake_types": 0,
+                "high_risk_warnings": 0,
+                "duration_formatted": cls.format_timestamp(session_data.get("duration_seconds", 0)),
+                "exercise_type": None
+            },
+            "mistakes": [],
+            "statistics": {
+                "total_mistakes": 0,
+                "unique_mistake_types": 0,
+                "most_common_mistake": None,
+                "high_frequency_mistakes": []
+            },
+            "generated_at": datetime.now().isoformat(),
+            "no_pose_detected": True  # Flag for frontend to handle differently
+        }
+    
     @classmethod
     def generate_quick_summary(cls, session_data: dict) -> str:
         """

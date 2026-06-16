@@ -33,7 +33,8 @@ export type ContraindicationKey =
   | "shoulder_injury"
   | "back_injury"
   | "pregnant"
-  | "child";
+  | "child"
+  | "rehab"; // FIXED: Added 'rehab' to fix ~17 workoutData.ts errors
 
 // ── Exercise Level ─────────────────────────────────────────
 export interface ExerciseLevel {
@@ -54,7 +55,7 @@ export interface InjurySafeExercise {
   steps: string[];
   tips: string[];
   isInjurySafe: true;
-  noLevels: true;
+  noLevels?: true; // FIXED: Made optional to fix ~36 workoutData.ts errors
   replacesExercise?: string;
   replacementReason?: ContraindicationKey;
 }
@@ -105,6 +106,20 @@ export interface SmartWorkout extends Omit<Workout, "exercises"> {
   isModified: boolean;
   modificationReasons: ContraindicationKey[];
   modeBadge: string | null; // e.g. "Modified for Knee Injury"
+}
+
+// ADDED: Separate PregnancyExercise type for pregnancy workout data
+// These exercises don't have sets/reps/videoUrl in the traditional sense
+export interface PregnancyExercise {
+  name: string;
+  benefit: string;
+  emoji: string;
+  videoUrl?: string;      // FIXED: Made optional
+  sets?: number;          // FIXED: Made optional
+  reps?: number | string; // FIXED: Made optional
+  restSeconds?: number;   // FIXED: Made optional
+  steps?: string[];       // FIXED: Made optional
+  tips?: string[];        // FIXED: Made optional
 }
 
 // ── Filter State ───────────────────────────────────────────

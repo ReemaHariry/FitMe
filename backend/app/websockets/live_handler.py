@@ -232,6 +232,9 @@ async def process_single_frame(
                 "form_status": "none"
             }
 
+        # Pose detected successfully - increment counter
+        tracker.increment_pose_count()
+
         feature_buffer.append(features)
         buffer_size = len(feature_buffer)
 
