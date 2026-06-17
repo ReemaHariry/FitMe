@@ -88,7 +88,7 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Scale className="w-5 h-5" />
-            ⚖️ Weight Progress
+            Weight Progress
           </h2>
           <Button
             variant="outline"

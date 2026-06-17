@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Play, Target, Calendar, Upload } from 'lucide-react'
+import { Play, Target, Upload, Clock, Star, Dumbbell, AlertCircle } from 'lucide-react'
 import { useI18nStore } from '@/app/i18n'
 import { useAuthStore } from '@/app/store'
 import Button from '@/components/ui/Button'
@@ -13,17 +13,16 @@ import { dashboardApi, type DashboardStats, type RecentSession } from '@/api/das
 import { weightApi, type WeightLog } from '@/api/weight'
 import { usersApi, type ProfileDataResponse } from '@/api/users'
 import MotivationCard from '@/components/dashboard/MotivationCard'
-import QuickStatsCards from '@/components/dashboard/QuickStatsCards'
+import WeeklyGoalCard from '@/components/dashboard/WeeklyGoalCard'
 import WeightTracker from '@/components/dashboard/WeightTracker'
-import AchievementBadges from '@/components/dashboard/AchievementBadges'
-import LastSessionSummary from '@/components/dashboard/LastSessionSummary'
 import StreakCalendar from '@/components/dashboard/StreakCalendar'
+import FireStreakCard from '@/components/dashboard/FireStreakCard'
 
 export default function Dashboard() {
   const { t } = useI18nStore()
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  
+
   // ============================================================================
   // REAL DATA STATE
   // ============================================================================
@@ -32,31 +31,34 @@ export default function Dashboard() {
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([])
   const [profile, setProfile] = useState<ProfileDataResponse | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [statsError, setStatsError] = useState<string | null>(null)
 
   // Load dashboard data on mount
   useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        setStatsLoading(true)
-        const [stats, recent, weights, userProfile] = await Promise.all([
-          dashboardApi.getStats(),
-          dashboardApi.getRecentSessions(3),
-          weightApi.getLogs(10),
-          usersApi.getProfile()
-        ])
-        setDashStats(stats)
-        setRecentSessions(recent)
-        setWeightLogs(weights)
-        setProfile(userProfile)
-      } catch (err) {
-        console.error('Failed to load dashboard:', err)
-      } finally {
-        setStatsLoading(false)
-      }
-    }
-
     loadDashboard()
   }, [])
+
+  const loadDashboard = async () => {
+    try {
+      setStatsLoading(true)
+      setStatsError(null)
+      const [stats, recent, weights, userProfile] = await Promise.all([
+        dashboardApi.getStats(),
+        dashboardApi.getRecentSessions(3),
+        weightApi.getLogs(10),
+        usersApi.getProfile()
+      ])
+      setDashStats(stats)
+      setRecentSessions(recent)
+      setWeightLogs(weights)
+      setProfile(userProfile)
+    } catch (err) {
+      console.error('Failed to load dashboard:', err)
+      setStatsError(t('common.error'))
+    } finally {
+      setStatsLoading(false)
+    }
+  }
 
   // Handler for weight log updates
   const handleWeightLogsUpdate = (updatedLogs: WeightLog[]) => {
@@ -64,7 +66,7 @@ export default function Dashboard() {
   }
 
   // ============================================================================
-  // STATS ARRAY NOW USES REAL DATA
+  // STATS — no streak here; streak has its own FireStreakCard
   // ============================================================================
   const stats = [
     {
@@ -75,16 +77,30 @@ export default function Dashboard() {
       bgColor: 'bg-primary/10',
     },
     {
-      title: t('dashboard.workoutStreak'),
-      value: statsLoading ? '...' : `${dashStats?.current_streak ?? 0} ${t('dashboard.days')}`,
-      icon: Calendar,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10',
+      title: t('dashboard.totalMinutes'),
+      value: statsLoading ? '...' : String(dashStats?.total_minutes ?? 0),
+      icon: Clock,
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-500/10',
+    },
+    {
+      title: t('dashboard.currentScore'),
+      value: statsLoading ? '...' : dashStats?.average_form_score ? `${dashStats.average_form_score}/100` : '--',
+      icon: Star,
+      color: 'text-yellow-500',
+      bgColor: 'bg-yellow-500/10',
+    },
+    {
+      title: t('dashboard.bestExercise'),
+      value: statsLoading ? '...' : (dashStats?.most_practiced_exercise && dashStats.most_practiced_exercise !== 'none' ? dashStats.most_practiced_exercise : '--'),
+      icon: Dumbbell,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
     },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       {/* Welcome Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -101,9 +117,9 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button 
+            <Button
               onClick={() => navigate('/live-training')}
-              className="flex items-center"
+              className="flex items-center shadow-md hover:shadow-lg transition-shadow bg-gradient-to-r from-primary to-primary/80"
             >
               <Play className="w-4 h-4 me-2" />
               {t('dashboard.startTraining')}
@@ -111,7 +127,7 @@ export default function Dashboard() {
             <Button
               onClick={() => navigate('/upload-video')}
               variant="outline"
-              className="flex items-center"
+              className="flex items-center shadow-sm"
             >
               <Upload className="w-4 h-4 me-2" />
               {t('dashboard.uploadVideo')}
@@ -120,165 +136,198 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      {/* Motivation Card */}
-      {!statsLoading && dashStats && profile && (
-        <MotivationCard
-          sessionsThisWeek={dashStats.sessions_this_week}
-          weeklyGoal={profile.training_days_per_week || 3}
-        />
+      {/* Error Banner */}
+      {statsError && (
+        <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 shadow-sm">
+          <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm font-medium">{statsError}</span>
+          </div>
+          <button
+            onClick={loadDashboard}
+            className="text-sm font-bold text-red-600 dark:text-red-400 hover:underline"
+          >
+            {t('common.retry')}
+          </button>
+        </div>
       )}
 
-      {/* Stats Grid */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
-        {stats.map((stat, index) => (
-          <StatsCard key={stat.title} {...stat} delay={index * 0.1} />
-        ))}
-        {!statsLoading && dashStats && profile && (
-          <QuickStatsCards
-            bestScore={dashStats.best_score}
-            sessionsThisWeek={dashStats.sessions_this_week}
-            weeklyGoal={profile.training_days_per_week || 3}
-          />
-        )}
-      </motion.div>
-
-      {/* Weight Tracker */}
-      {!statsLoading && profile && (
-        <WeightTracker
-          initialLogs={weightLogs}
-          fitnessGoal={profile.fitness_goal || undefined}
-          onLogsUpdate={handleWeightLogsUpdate}
-        />
-      )}
-
-      {/* Achievement Badges */}
-      {!statsLoading && dashStats && (
-        <AchievementBadges stats={dashStats} weightLogs={weightLogs} />
-      )}
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Last Session Summary */}
-        {!statsLoading && recentSessions.length > 0 && (
-          <LastSessionSummary session={recentSessions[0]} />
-        )}
-
-        {/* Session History */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-        >
-          <Card>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {t('dashboard.recentSessions')}
-              </h2>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/reports')}>
-                {t('dashboard.viewAll')}
-              </Button>
+      {/* MAIN LAYOUT: TWO COLUMNS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        
+        {/* LEFT COLUMN (Main Content) - 8 columns wide */}
+        <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+          
+          {/* Stats Grid + Fire Streak side by side */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            {/* 4 small stat cards */}
+            <div className="md:col-span-2 grid grid-cols-2 gap-4">
+              {stats.map((stat, index) => (
+                <StatsCard key={stat.title} {...stat} delay={index * 0.08} />
+              ))}
             </div>
-            
-            {/* Loading State */}
-            {statsLoading && (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse p-4 bg-gray-200 dark:bg-gray-700 rounded-xl h-16"></div>
-                ))}
+
+            {/* Fire Streak Card */}
+            <div className="flex items-stretch">
+              <div className="w-full h-full">
+                <FireStreakCard
+                  streak={dashStats?.current_streak ?? 0}
+                  loading={statsLoading}
+                />
               </div>
-            )}
-            
-            {/* Empty State */}
-            {!statsLoading && recentSessions.length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                {t('dashboard.noSessionsYet')}
+            </div>
+          </motion.div>
+
+          {/* Daily Quote Banner */}
+          <MotivationCard className="hover:shadow-md transition-shadow" />
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card className="h-full shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {t('dashboard.weeklyActivity')}
+                  </h2>
+                </div>
+                <ActivityChart />
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className="h-full shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {t('dashboard.progressOverTime')}
+                  </h2>
+                </div>
+                <ProgressChart />
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Session History */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Card className="shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {t('dashboard.recentSessions')}
+                </h2>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/reports')}>
+                  {t('dashboard.viewAll')}
+                </Button>
               </div>
-            )}
-            
-            {/* Recent Sessions List */}
-            {!statsLoading && recentSessions.length > 0 && (
-              <div className="space-y-4">
-                {recentSessions.map((session) => (
-                  <div
-                    key={session.id}
-                    onClick={() => session.report_id && navigate(`/reports/${session.report_id}`)}
-                    className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl ${
-                      session.report_id ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors' : ''
-                    }`}
-                  >
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">
-                        {session.session_name}
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {session.date_label} • {
-                          // FIXED: Show duration properly
-                          session.duration_minutes > 0
-                            ? `${session.duration_minutes} ${t('common.minutes')}`
-                            : session.duration_seconds > 0
-                            ? '< 1 min'
-                            : '—'
-                        }
-                        {session.form_score !== null && ` • ${t('common.score')}: ${session.form_score}/100`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-primary capitalize">
-                        {session.performance_rating.replace('_', ' ')}
-                      </p>
-                    </div>
+
+              {statsLoading && (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse p-4 bg-gray-200 dark:bg-gray-700 rounded-xl h-16" />
+                  ))}
+                </div>
+              )}
+
+              {!statsLoading && recentSessions.length === 0 && (
+                <div className="text-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                    <Dumbbell className="w-6 h-6 text-primary" />
                   </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </motion.div>
-      </div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No sessions yet</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Your workout history will appear here.
+                  </p>
+                  <Button onClick={() => navigate('/live-training')} size="sm">
+                    Start your first workout
+                  </Button>
+                </div>
+              )}
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Activity */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
-        >
-          <Card>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {t('dashboard.weeklyActivity')}
-              </h2>
+              {!statsLoading && recentSessions.length > 0 && (
+                <div className="space-y-3">
+                  {recentSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      onClick={() => session.report_id && navigate(`/reports/${session.report_id}`)}
+                      className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-transparent ${
+                        session.report_id ? 'cursor-pointer hover:border-gray-200 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-700 transition-all shadow-sm' : ''
+                      }`}
+                    >
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {session.session_name}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {session.date_label} • {
+                            session.duration_minutes > 0
+                              ? `${session.duration_minutes} ${t('common.minutes')}`
+                              : session.duration_seconds > 0
+                              ? '< 1 min'
+                              : '—'
+                          }
+                          {session.form_score !== null && ` • ${t('common.score')}: ${session.form_score}/100`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary capitalize">
+                          {session.performance_rating.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </motion.div>
+
+        </div>
+
+        {/* RIGHT COLUMN (Sidebar) - 4 columns wide */}
+        <div className="lg:col-span-4 space-y-6 lg:space-y-8 lg:sticky lg:top-6">
+          
+          {/* Weekly Goal */}
+          {!statsLoading && dashStats && profile && (
+            <WeeklyGoalCard
+              sessionsThisWeek={dashStats.sessions_this_week}
+              weeklyGoal={profile.training_days_per_week || 3}
+            />
+          )}
+
+          {/* Weight Tracker */}
+          {!statsLoading && profile && (
+            <div className="shadow-sm hover:shadow-md transition-shadow rounded-2xl">
+              <WeightTracker
+                initialLogs={weightLogs}
+                fitnessGoal={profile.fitness_goal || undefined}
+                onLogsUpdate={handleWeightLogsUpdate}
+              />
             </div>
-            <ActivityChart />
-          </Card>
-        </motion.div>
+          )}
 
-        {/* Progress Over Time */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
-        >
-          <Card>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {t('dashboard.progressOverTime')}
-              </h2>
+          {/* Streak Calendar */}
+          {!statsLoading && dashStats && (
+            <div className="shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden">
+              <StreakCalendar activeDates={dashStats.active_dates_last_30} />
             </div>
-            <ProgressChart />
-          </Card>
-        </motion.div>
-      </div>
+          )}
 
-      {/* Streak Calendar */}
-      {!statsLoading && dashStats && (
-        <StreakCalendar activeDates={dashStats.active_dates_last_30} />
-      )}
+        </div>
+      </div>
     </div>
   )
 }

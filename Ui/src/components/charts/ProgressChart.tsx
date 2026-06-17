@@ -114,19 +114,10 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
       if (data.avg_score === null) return null
       
       return (
-        <div
-          style={{
-            backgroundColor: '#1f2937',
-            border: '1px solid #374151',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            color: '#f9fafb',
-            fontSize: '12px'
-          }}
-        >
-          <p className="font-medium">{data.month} {data.year}</p>
-          <p className="text-green-400">{data.avg_score}/100</p>
-          <p className="text-gray-400">{data.sessions} session{data.sessions !== 1 ? 's' : ''}</p>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm shadow-lg">
+          <p className="font-medium text-gray-900 dark:text-white">{data.month} {data.year}</p>
+          <p className="text-green-500">{data.avg_score}/100</p>
+          <p className="text-gray-500 dark:text-gray-400">{data.sessions} session{data.sessions !== 1 ? 's' : ''}</p>
         </div>
       )
     }
@@ -144,7 +135,7 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
   if (!data || data.every(m => m.avg_score === null)) {
     return (
       <div className={`flex items-center justify-center h-[200px] text-gray-500 ${className}`}>
-        Complete sessions to see progress
+        {t('dashboard.noProgressYet')}
       </div>
     )
   }
@@ -201,7 +192,7 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
           </motion.span>
         )}
         {improvement === 0 && (
-          <span className="text-gray-500">No change</span>
+          <span className="text-gray-500">{t('dashboard.noChange')}</span>
         )}
       </div>
     </div>

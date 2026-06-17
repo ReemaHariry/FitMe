@@ -48,6 +48,12 @@ export const en = {
   'dashboard.currentScore': 'Current Score',
   'dashboard.totalMinutes': 'Total Minutes',
   'dashboard.avgPerDay': 'avg/day',
+  'dashboard.bestStreak': 'Best Streak',
+  'dashboard.bestExercise': 'Top Exercise',
+  'dashboard.noActivityThisWeek': 'No activity this week',
+  'dashboard.noProgressYet': 'Complete sessions to see progress',
+  'dashboard.noChange': 'No change',
+  'dashboard.twoWeeksAgo': '2 Weeks Ago',
   
   // Onboarding
   'onboarding.welcome': 'Welcome to AI Fitness Trainer',
@@ -345,6 +351,4 @@ export const en = {
   'dashboard.welcomeBack': 'Welcome back',
   'dashboard.excellent': 'Excellent',
   'dashboard.workoutSession': 'Workout Session',
-  'dashboard.noChange': 'No change',
-  
 }
