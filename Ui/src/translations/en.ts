@@ -28,7 +28,7 @@ export const en = {
   'nav.uploadVideo': 'Upload Video',
   
   // Dashboard
-  'dashboard.welcomeMessage': 'Ready for your workout today!',
+  'dashboard.welcomeMessage': "Let's keep up the great work today.",
   'dashboard.startTraining': 'Start Training',
   'dashboard.totalSessions': 'Total Sessions',
   'dashboard.workoutStreak': 'Workout Streak',

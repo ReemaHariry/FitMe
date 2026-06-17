@@ -150,13 +150,14 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
 
       {/* Chart */}
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data ?? []} margin={{ top: 5, right: 10, left: -10, bottom: 0 }} barCategoryGap="30%">
+        <BarChart data={data ?? []} margin={{ top: 10, right: 10, left: 10, bottom: 5 }} barCategoryGap="30%">
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(156,163,175,0.2)" vertical={false} />
           <XAxis
             dataKey="day"
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#9ca3af', fontSize: 12 }}
+            dy={5}
           />
           <YAxis
             domain={[0, yMax]}
@@ -164,7 +165,7 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
             tickLine={false}
             tick={{ fill: '#9ca3af', fontSize: 11 }}
             tickFormatter={(v) => `${v}m`}
-            width={36}
+            width={40}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99,102,241,0.05)' }} />
           {/* Reference line at average */}
@@ -177,7 +178,7 @@ export default function ActivityChart({ className = '' }: ActivityChartProps) {
               label={{ value: 'avg', position: 'insideTopRight', fill: '#6366f1', fontSize: 10 }}
             />
           )}
-          <Bar dataKey="minutes" radius={[6, 6, 0, 0]} maxBarSize={48}>
+          <Bar dataKey="minutes" radius={[6, 6, 0, 0]} maxBarSize={48} minPointSize={8}>
             {(data ?? []).map((entry, index) => (
               <Cell
                 key={`cell-${index}`}

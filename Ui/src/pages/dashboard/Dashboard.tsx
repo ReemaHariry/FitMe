@@ -26,11 +26,28 @@ export default function Dashboard() {
   // ============================================================================
   // REAL DATA STATE
   // ============================================================================
-  const [dashStats, setDashStats] = useState<DashboardStats | null>(null)
-  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([])
-  const [weightLogs, setWeightLogs] = useState<WeightLog[]>([])
-  const [profile, setProfile] = useState<ProfileDataResponse | null>(null)
-  const [statsLoading, setStatsLoading] = useState(true)
+  const [dashStats, setDashStats] = useState<DashboardStats | null>(() => {
+    const cached = sessionStorage.getItem('fitme_dashStats')
+    return cached ? JSON.parse(cached) : null
+  })
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>(() => {
+    const cached = sessionStorage.getItem('fitme_recentSessions')
+    return cached ? JSON.parse(cached) : []
+  })
+  const [weightLogs, setWeightLogs] = useState<WeightLog[]>(() => {
+    const cached = sessionStorage.getItem('fitme_weightLogs')
+    return cached ? JSON.parse(cached) : []
+  })
+  const [profile, setProfile] = useState<ProfileDataResponse | null>(() => {
+    const cached = sessionStorage.getItem('fitme_profile')
+    return cached ? JSON.parse(cached) : null
+  })
+
+  // We only show loading state if we DON'T have cached data
+  const [statsLoading, setStatsLoading] = useState(!dashStats)
+  const [recentLoading, setRecentLoading] = useState(recentSessions.length === 0)
+  const [weightLoading, setWeightLoading] = useState(weightLogs.length === 0)
+  const [profileLoading, setProfileLoading] = useState(!profile)
   const [statsError, setStatsError] = useState<string | null>(null)
 
   // Load dashboard data on mount
@@ -38,26 +55,57 @@ export default function Dashboard() {
     loadDashboard()
   }, [])
 
-  const loadDashboard = async () => {
-    try {
-      setStatsLoading(true)
-      setStatsError(null)
-      const [stats, recent, weights, userProfile] = await Promise.all([
-        dashboardApi.getStats(),
-        dashboardApi.getRecentSessions(3),
-        weightApi.getLogs(10),
-        usersApi.getProfile()
-      ])
-      setDashStats(stats)
-      setRecentSessions(recent)
-      setWeightLogs(weights)
-      setProfile(userProfile)
-    } catch (err) {
-      console.error('Failed to load dashboard:', err)
-      setStatsError(t('common.error'))
-    } finally {
-      setStatsLoading(false)
-    }
+  const loadDashboard = () => {
+    setStatsError(null)
+
+    // 1. Load Stats
+    dashboardApi.getStats()
+      .then(stats => {
+        setDashStats(stats)
+        sessionStorage.setItem('fitme_dashStats', JSON.stringify(stats))
+        setStatsLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to load stats:', err)
+        setStatsError(t('common.error'))
+        setStatsLoading(false)
+      })
+
+    // 2. Load Recent Sessions
+    dashboardApi.getRecentSessions(3)
+      .then(recent => {
+        setRecentSessions(recent)
+        sessionStorage.setItem('fitme_recentSessions', JSON.stringify(recent))
+        setRecentLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to load recent sessions:', err)
+        setRecentLoading(false)
+      })
+
+    // 3. Load Weight Logs
+    weightApi.getLogs(10)
+      .then(weights => {
+        setWeightLogs(weights)
+        sessionStorage.setItem('fitme_weightLogs', JSON.stringify(weights))
+        setWeightLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to load weight logs:', err)
+        setWeightLoading(false)
+      })
+
+    // 4. Load Profile
+    usersApi.getProfile()
+      .then(userProfile => {
+        setProfile(userProfile)
+        sessionStorage.setItem('fitme_profile', JSON.stringify(userProfile))
+        setProfileLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to load profile:', err)
+        setProfileLoading(false)
+      })
   }
 
   // Handler for weight log updates
@@ -110,7 +158,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              👋 {t('auth.welcomeBack')}, {user?.name?.split(' ')[0]}!
+              {t('auth.welcomeBack')}, {user?.name?.split(' ')[0]}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               {t('dashboard.welcomeMessage')}
@@ -235,7 +283,7 @@ export default function Dashboard() {
                 </Button>
               </div>
 
-              {statsLoading && (
+              {recentLoading && (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="animate-pulse p-4 bg-gray-200 dark:bg-gray-700 rounded-xl h-16" />
@@ -243,7 +291,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {!statsLoading && recentSessions.length === 0 && (
+              {!recentLoading && recentSessions.length === 0 && (
                 <div className="text-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
                   <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
                     <Dumbbell className="w-6 h-6 text-primary" />
@@ -258,7 +306,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {!statsLoading && recentSessions.length > 0 && (
+              {!recentLoading && recentSessions.length > 0 && (
                 <div className="space-y-3">
                   {recentSessions.map((session) => (
                     <div
@@ -301,7 +349,7 @@ export default function Dashboard() {
         <div className="lg:col-span-4 space-y-6 lg:space-y-8 lg:sticky lg:top-6">
           
           {/* Weekly Goal */}
-          {!statsLoading && dashStats && profile && (
+          {!statsLoading && !profileLoading && dashStats && profile && (
             <WeeklyGoalCard
               sessionsThisWeek={dashStats.sessions_this_week}
               weeklyGoal={profile.training_days_per_week || 3}
@@ -309,7 +357,7 @@ export default function Dashboard() {
           )}
 
           {/* Weight Tracker */}
-          {!statsLoading && profile && (
+          {!weightLoading && !profileLoading && profile && (
             <div className="shadow-sm hover:shadow-md transition-shadow rounded-2xl">
               <WeightTracker
                 initialLogs={weightLogs}

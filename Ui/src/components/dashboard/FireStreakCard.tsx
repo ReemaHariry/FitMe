@@ -54,11 +54,11 @@ function getFireConfig(streak: number) {
   }
   return {
     label: 'Just Started',
-    colors: ['#9ca3af', '#d1d5db', '#f3f4f6'],
-    size: 32,
+    colors: ['#ea580c', '#f97316', '#fb923c'],
+    size: 34,
     layers: 1,
     speed: 1.4,
-    glow: 'rgba(156,163,175,0.15)',
+    glow: 'rgba(234,88,12,0.3)',
   }
 }
 
@@ -131,7 +131,7 @@ export default function FireStreakCard({ streak, loading = false }: FireStreakCa
           className="flex items-center justify-center"
         >
           <span
-            className="font-black text-white drop-shadow-lg"
+            className="font-black text-gray-900 dark:text-white drop-shadow-[0_2px_4px_rgba(255,255,255,0.4)] dark:drop-shadow-lg"
             style={{ fontSize: `${Math.max(14, Math.min(28, 14 + streak))}px`, letterSpacing: '-1px' }}
           >
             {loading ? '·' : streak}
