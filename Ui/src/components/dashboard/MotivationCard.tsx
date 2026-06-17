@@ -2,8 +2,7 @@ import { motion } from 'framer-motion'
 import { Target } from 'lucide-react'
 
 interface MotivationCardProps {
-  sessionsThisWeek: number
-  weeklyGoal: number
+  className?: string
 }
 
 const QUOTES = [
@@ -39,64 +38,36 @@ const QUOTES = [
   { text: "Believe in yourself and all that you are.", author: "Christian D. Larson" },
 ]
 
-export default function MotivationCard({ sessionsThisWeek, weeklyGoal }: MotivationCardProps) {
+export default function MotivationCard({ className = '' }: MotivationCardProps) {
   // Get quote based on day of month
   const dayOfMonth = new Date().getDate()
   const quote = QUOTES[dayOfMonth % QUOTES.length]
-  
-  // Calculate progress
-  const remaining = Math.max(0, weeklyGoal - sessionsThisWeek)
-  const progress = Math.min(100, (sessionsThisWeek / weeklyGoal) * 100)
-  const isGoalComplete = sessionsThisWeek >= weeklyGoal
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.05 }}
-      className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-6 border-l-4 border-primary"
+      className={`bg-white dark:bg-gray-800 rounded-2xl p-8 md:p-10 border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden group ${className}`}
     >
-      {/* Quote Section */}
-      <div className="mb-4">
-        <p className="text-gray-700 dark:text-gray-300 italic text-base leading-relaxed">
-          "{quote.text}"
-        </p>
-        <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">— {quote.author}</p>
+      {/* Massive subtle background quote icon */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary/5 dark:text-primary/10 transition-transform duration-700 group-hover:scale-110 pointer-events-none">
+        <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14.017 21L16.417 14.281C14.017 13.916 12.217 11.95 12.217 9.539V3H21.217V9.539C21.217 14.869 17.517 19.897 14.017 21ZM5.01697 21L7.41697 14.281C5.01697 13.916 3.21697 11.95 3.21697 9.539V3H12.217V9.539C12.217 14.869 8.51697 19.897 5.01697 21Z" />
+        </svg>
       </div>
 
-      {/* Divider */}
-      <div className="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
-
-      {/* Goal Section */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Today's Goal
-            </span>
-          </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {sessionsThisWeek}/{weeklyGoal} sessions
-          </span>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-
-        {/* Goal Message */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-          {isGoalComplete ? (
-            <span className="text-primary font-medium">🎉 Weekly goal complete! You did it!</span>
-          ) : (
-            `You have ${remaining} workout${remaining !== 1 ? 's' : ''} left to hit your weekly goal`
-          )}
+      <div className="relative z-10 w-full max-w-3xl mx-auto">
+        <p className="text-gray-800 dark:text-gray-100 italic text-xl md:text-2xl font-light tracking-wide leading-relaxed mb-6">
+          "{quote.text}"
         </p>
+        <div className="flex items-center justify-center gap-4">
+          <div className="h-px w-12 bg-primary/40 rounded-full"></div>
+          <p className="text-primary font-semibold text-sm tracking-[0.2em] uppercase">
+            {quote.author}
+          </p>
+          <div className="h-px w-12 bg-primary/40 rounded-full"></div>
+        </div>
       </div>
     </motion.div>
   )

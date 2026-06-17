@@ -48,6 +48,12 @@ export const ar = {
   'dashboard.currentScore': 'الدرجة الحالية',
   'dashboard.totalMinutes': 'إجمالي الدقائق',
   'dashboard.avgPerDay': 'متوسط/يوم',
+  'dashboard.bestStreak': 'أفضل سلسلة',
+  'dashboard.bestExercise': 'أفضل تمرين',
+  'dashboard.noActivityThisWeek': 'لا يوجد نشاط هذا الأسبوع',
+  'dashboard.noProgressYet': 'أكمل جلسات لعرض التقدم',
+  'dashboard.noChange': 'لا تغيير',
+  'dashboard.twoWeeksAgo': 'منذ أسبوعين',
   
   // Onboarding
   'onboarding.welcome': 'مرحباً بك في مدرب اللياقة الذكي',
