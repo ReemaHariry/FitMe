@@ -28,7 +28,7 @@ export default function WeeklyGoalCard({ sessionsThisWeek, weeklyGoal }: WeeklyG
           </span>
         </div>
         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {t('dashboard.sessionsCount', { current: sessionsThisWeek, goal: weeklyGoal })}
+          {sessionsThisWeek}/{weeklyGoal} sessions
         </span>
       </div>
 
@@ -42,9 +42,7 @@ export default function WeeklyGoalCard({ sessionsThisWeek, weeklyGoal }: WeeklyG
 
       {/* Goal Message */}
       <p className="text-sm text-gray-600 dark:text-gray-400">
-        {isGoalComplete ? (
-          <span className="text-green-500 font-medium">{t('dashboard.weeklyGoalComplete')}</span>
-        ) : (
+        {isGoalComplete ? null : (
           remaining === 1 
             ? t('dashboard.workoutsLeft', { count: remaining })
             : t('dashboard.workoutsLeftPlural', { count: remaining })

@@ -21,6 +21,8 @@ export const en = {
   'nav.dashboard': 'Dashboard',
   'nav.workouts': 'Workouts',
   'nav.liveTraining': 'Live Training',
+  'nav.workoutPlan': 'Workout Plan',
+  'nav.nutrition': 'Nutrition',
   'nav.reports': 'Reports',
   'nav.profile': 'Profile',
   'nav.settings': 'Settings',

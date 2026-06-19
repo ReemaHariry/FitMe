@@ -6,7 +6,9 @@ import {
   Video, 
   BarChart3, 
   User, 
-  Settings
+  Settings,
+  Calendar,
+  UtensilsCrossed
 } from 'lucide-react'
 import { useI18nStore } from '@/app/i18n'
 import { cn } from '@/lib/utils'
@@ -15,6 +17,8 @@ const navigation = [
   { name: 'nav.dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'nav.workouts', href: '/workouts', icon: Dumbbell },
   { name: 'nav.liveTraining', href: '/live-training', icon: Video },
+  { name: 'nav.workoutPlan', href: '/workout-plan', icon: Calendar },
+  { name: 'nav.nutrition', href: '/nutrition', icon: UtensilsCrossed },
   { name: 'nav.reports', href: '/reports', icon: BarChart3 },
   { name: 'nav.profile', href: '/profile', icon: User },
   { name: 'nav.settings', href: '/settings', icon: Settings },
