@@ -4,24 +4,18 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { 
-  User, 
-  Mail, 
-  Calendar, 
-  Ruler, 
-  Weight, 
-  Target, 
-  TrendingUp,
   Camera,
   Edit3,
   Save,
   X,
   Trash2,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { useAuthStore } from '@/app/store'
 import { useI18nStore } from '@/app/i18n'
-import { dashboardApi, type DashboardStats } from '@/api/dashboard'
-import { usersApi, type ProgressPhoto } from '@/api/users'
+import { usersApi, type ProgressPhoto, type ProfileDataResponse } from '@/api/users'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -45,17 +39,24 @@ export default function Profile() {
   const { t } = useI18nStore()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  // ADDED: Account stats state
-  const [accountStats, setAccountStats] = useState<DashboardStats | null>(null)
-  const [statsLoading, setStatsLoading] = useState(true)
+  // ADDED: Profile data state (fetched from API)
+  const [profile, setProfile] = useState<ProfileDataResponse | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
 
-  // ADDED: Progress photos state
+  // Progress photos state
   const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([])
   const [photosLoading, setPhotosLoading] = useState(true)
   const [uploadingType, setUploadingType] = useState<string | null>(null)
   const [selectedPhotoForView, setSelectedPhotoForView] = useState<ProgressPhoto | null>(null)
   const [showPhotoTypeSelector, setShowPhotoTypeSelector] = useState(false)
+  
+  // ADDED: Photo navigation state (current index per type)
+  const [frontPhotoIndex, setFrontPhotoIndex] = useState(0)
+  const [sidePhotoIndex, setSidePhotoIndex] = useState(0)
+  const [backPhotoIndex, setBackPhotoIndex] = useState(0)
   
   // File input refs for each photo type
   const frontFileInputRef = useRef<HTMLInputElement>(null)
@@ -65,39 +66,49 @@ export default function Profile() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     reset,
+    setValue,
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
-      age: user?.profile?.age || 25,
-      height: user?.profile?.height || 170,
-      weight: user?.profile?.weight || 70,
-      fitnessGoal: user?.profile?.fitnessGoal || 'maintain',
-      trainingDaysPerWeek: user?.profile?.trainingDaysPerWeek || 3,
-      preferredWorkoutDuration: user?.profile?.preferredWorkoutDuration || 60,
+      age: 25,
+      height: 170,
+      weight: 70,
+      fitnessGoal: 'maintain',
+      trainingDaysPerWeek: 3,
+      preferredWorkoutDuration: 60,
     },
   })
 
-  // ADDED: Fetch account stats on mount
+  // ADDED: Load profile data from API on mount
   useEffect(() => {
-    const loadStats = async () => {
+    const loadProfile = async () => {
       try {
-        setStatsLoading(true)
-        const stats = await dashboardApi.getStats()
-        setAccountStats(stats)
+        setProfileLoading(true)
+        const data = await usersApi.getProfile()
+        setProfile(data)
+        
+        // Update form with fetched data
+        setValue('name', user?.name || '')
+        setValue('email', user?.email || '')
+        setValue('age', data.age || 25)
+        setValue('height', data.height || 170)
+        setValue('weight', data.weight || 70)
+        setValue('fitnessGoal', (data.fitness_goal as any) || 'maintain')
+        setValue('trainingDaysPerWeek', data.training_days_per_week || 3)
+        setValue('preferredWorkoutDuration', data.preferred_workout_duration || 60)
       } catch (err) {
-        console.error('Failed to load account stats:', err)
-        setAccountStats(null)
+        console.error('Failed to load profile:', err)
       } finally {
-        setStatsLoading(false)
+        setProfileLoading(false)
       }
     }
 
-    loadStats()
-  }, [])
+    loadProfile()
+  }, [user, setValue])
 
   // ADDED: Fetch progress photos on mount
   useEffect(() => {
@@ -109,6 +120,10 @@ export default function Profile() {
       setPhotosLoading(true)
       const photos = await usersApi.getProgressPhotos()
       setProgressPhotos(photos)
+      // Reset navigation indices
+      setFrontPhotoIndex(0)
+      setSidePhotoIndex(0)
+      setBackPhotoIndex(0)
     } catch (err) {
       console.error('Failed to load progress photos:', err)
     } finally {
@@ -116,20 +131,38 @@ export default function Profile() {
     }
   }
 
+  // FIXED: Save profile to backend API
   const onSubmit = async (data: ProfileForm) => {
     setLoading(true)
+    setSaveSuccess(false)
+    setSaveError(null)
+    
     try {
-      const { name, email, ...profileData } = data
-      // FIXED: Add missing gender and experienceLevel fields
-      const completeProfileData = {
-        ...profileData,
-        gender: (user?.profile?.gender as 'male' | 'female') || 'male',
-        experienceLevel: (user?.profile?.experienceLevel as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
-      }
-      updateProfile(completeProfileData)
+      // Call backend API to update profile
+      const updated = await usersApi.updateProfile({
+        age: data.age,
+        height: data.height,
+        weight: data.weight,
+        fitness_goal: data.fitnessGoal,
+        training_days_per_week: data.trainingDaysPerWeek,
+        preferred_workout_duration: data.preferredWorkoutDuration,
+      })
+      
+      // Update local profile state
+      setProfile(updated)
+      
+      // Show success message
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+      
+      // Exit edit mode
       setIsEditing(false)
-    } catch (error) {
+      
+      // Reset form dirty state
+      reset(data)
+    } catch (error: any) {
       console.error('Failed to update profile:', error)
+      setSaveError(error.response?.data?.detail || 'Failed to save profile. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -138,6 +171,7 @@ export default function Profile() {
   const handleCancel = () => {
     reset()
     setIsEditing(false)
+    setSaveError(null)
   }
 
   // ADDED: Handle photo upload
@@ -204,24 +238,14 @@ export default function Profile() {
     }
   }
 
-  // ADDED: Get most recent photo for each type
-  const frontPhoto = progressPhotos.find(p => p.photo_type === 'front')
-  const sidePhoto = progressPhotos.find(p => p.photo_type === 'side')
-  const backPhoto = progressPhotos.find(p => p.photo_type === 'back')
+  // ADDED: Get most recent photo for each type + group all photos by type
+  const frontPhotos = progressPhotos.filter(p => p.photo_type === 'front')
+  const sidePhotos = progressPhotos.filter(p => p.photo_type === 'side')
+  const backPhotos = progressPhotos.filter(p => p.photo_type === 'back')
 
-  // ADDED: Calculate member since
-  const memberSince = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString('en-US', {
-        month: 'short',
-        year: 'numeric'
-      })
-    : '—'
-
-  const bodyMetrics = [
-    { label: 'Weight', value: `${user?.profile?.weight || 70} kg`, icon: Weight, trend: '-2.5 kg' },
-    { label: 'Height', value: `${user?.profile?.height || 170} cm`, icon: Ruler, trend: null },
-    { label: 'Body Fat', value: '15%', icon: TrendingUp, trend: '-2%' },
-  ]
+  const currentFrontPhoto = frontPhotos[frontPhotoIndex]
+  const currentSidePhoto = sidePhotos[sidePhotoIndex]
+  const currentBackPhoto = backPhotos[backPhotoIndex]
 
   return (
     <div className="space-y-6">
@@ -246,6 +270,7 @@ export default function Profile() {
               variant="outline"
               onClick={handleCancel}
               className="flex items-center"
+              disabled={loading}
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -253,6 +278,7 @@ export default function Profile() {
             <Button
               onClick={handleSubmit(onSubmit)}
               loading={loading}
+              disabled={!isDirty || loading}
               className="flex items-center"
             >
               <Save className="w-4 h-4 mr-2" />
@@ -262,16 +288,46 @@ export default function Profile() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Information */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card>
+      {/* Success/Error Messages */}
+      {saveSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center gap-3"
+        >
+          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
+            ✓
+          </div>
+          <p className="text-green-800 dark:text-green-200 font-medium">
+            Profile updated successfully!
+          </p>
+        </motion.div>
+      )}
+      
+      {saveError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-center gap-3"
+        >
+          <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white">
+            ✕
+          </div>
+          <p className="text-red-800 dark:text-red-200 font-medium">
+            {saveError}
+          </p>
+        </motion.div>
+      )}
+
+      {/* Profile Info and Progress Photos */}
+      <div className="space-y-6">
+        {/* Basic Information */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card>
               <div className="flex items-center space-x-4 mb-6">
                 <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
                   {user?.name?.charAt(0).toUpperCase()}
@@ -470,173 +526,172 @@ export default function Profile() {
                 onChange={(e) => handleFileInputChange(e, 'back')}
               />
               
-              {/* Photo Grid */}
+              {/* Photo Grid with Navigation (FIXED - Problem 3) */}
               <div className="grid grid-cols-3 gap-4">
                 {/* Front Photo */}
-                <div
-                  className={`aspect-square bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden ${
-                    frontPhoto ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
-                  }`}
-                  onClick={() => frontPhoto && setSelectedPhotoForView(frontPhoto)}
-                >
-                  {photosLoading ? (
-                    <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                  ) : frontPhoto ? (
-                    <img
-                      src={frontPhoto.photo_url}
-                      alt="Front"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-center">
-                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Front</p>
-                      <p className="text-xs text-gray-400">No photo</p>
+                <div className="relative">
+                  <div
+                    className={`aspect-square bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden ${
+                      currentFrontPhoto ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
+                    }`}
+                    onClick={() => currentFrontPhoto && setSelectedPhotoForView(currentFrontPhoto)}
+                  >
+                    {photosLoading ? (
+                      <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                    ) : currentFrontPhoto ? (
+                      <img
+                        src={currentFrontPhoto.photo_url}
+                        alt="Front"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Front</p>
+                        <p className="text-xs text-gray-400">No photo</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Navigation for Front Photos */}
+                  {frontPhotos.length > 1 && (
+                    <div className="mt-2 flex items-center justify-between">
+                      <button
+                        onClick={() => setFrontPhotoIndex(Math.max(0, frontPhotoIndex - 1))}
+                        disabled={frontPhotoIndex === 0}
+                        className="p-1 rounded bg-gray-200 dark:bg-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        {frontPhotoIndex + 1} / {frontPhotos.length}
+                      </span>
+                      <button
+                        onClick={() => setFrontPhotoIndex(Math.min(frontPhotos.length - 1, frontPhotoIndex + 1))}
+                        disabled={frontPhotoIndex === frontPhotos.length - 1}
+                        className="p-1 rounded bg-gray-200 dark:bg-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
+                  )}
+                  {currentFrontPhoto && (
+                    <p className="text-xs text-gray-400 text-center mt-1">
+                      {new Date(currentFrontPhoto.taken_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
                   )}
                 </div>
 
                 {/* Side Photo */}
-                <div
-                  className={`aspect-square bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden ${
-                    sidePhoto ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
-                  }`}
-                  onClick={() => sidePhoto && setSelectedPhotoForView(sidePhoto)}
-                >
-                  {photosLoading ? (
-                    <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                  ) : sidePhoto ? (
-                    <img
-                      src={sidePhoto.photo_url}
-                      alt="Side"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-center">
-                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Side</p>
-                      <p className="text-xs text-gray-400">No photo</p>
+                <div className="relative">
+                  <div
+                    className={`aspect-square bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden ${
+                      currentSidePhoto ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
+                    }`}
+                    onClick={() => currentSidePhoto && setSelectedPhotoForView(currentSidePhoto)}
+                  >
+                    {photosLoading ? (
+                      <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                    ) : currentSidePhoto ? (
+                      <img
+                        src={currentSidePhoto.photo_url}
+                        alt="Side"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Side</p>
+                        <p className="text-xs text-gray-400">No photo</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Navigation for Side Photos */}
+                  {sidePhotos.length > 1 && (
+                    <div className="mt-2 flex items-center justify-between">
+                      <button
+                        onClick={() => setSidePhotoIndex(Math.max(0, sidePhotoIndex - 1))}
+                        disabled={sidePhotoIndex === 0}
+                        className="p-1 rounded bg-gray-200 dark:bg-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        {sidePhotoIndex + 1} / {sidePhotos.length}
+                      </span>
+                      <button
+                        onClick={() => setSidePhotoIndex(Math.min(sidePhotos.length - 1, sidePhotoIndex + 1))}
+                        disabled={sidePhotoIndex === sidePhotos.length - 1}
+                        className="p-1 rounded bg-gray-200 dark:bg-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
+                  )}
+                  {currentSidePhoto && (
+                    <p className="text-xs text-gray-400 text-center mt-1">
+                      {new Date(currentSidePhoto.taken_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
                   )}
                 </div>
 
                 {/* Back Photo */}
-                <div
-                  className={`aspect-square bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden ${
-                    backPhoto ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
-                  }`}
-                  onClick={() => backPhoto && setSelectedPhotoForView(backPhoto)}
-                >
-                  {photosLoading ? (
-                    <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                  ) : backPhoto ? (
-                    <img
-                      src={backPhoto.photo_url}
-                      alt="Back"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-center">
-                      <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Back</p>
-                      <p className="text-xs text-gray-400">No photo</p>
+                <div className="relative">
+                  <div
+                    className={`aspect-square bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden ${
+                      currentBackPhoto ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
+                    }`}
+                    onClick={() => currentBackPhoto && setSelectedPhotoForView(currentBackPhoto)}
+                  >
+                    {photosLoading ? (
+                      <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                    ) : currentBackPhoto ? (
+                      <img
+                        src={currentBackPhoto.photo_url}
+                        alt="Back"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Back</p>
+                        <p className="text-xs text-gray-400">No photo</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Navigation for Back Photos */}
+                  {backPhotos.length > 1 && (
+                    <div className="mt-2 flex items-center justify-between">
+                      <button
+                        onClick={() => setBackPhotoIndex(Math.max(0, backPhotoIndex - 1))}
+                        disabled={backPhotoIndex === 0}
+                        className="p-1 rounded bg-gray-200 dark:bg-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        {backPhotoIndex + 1} / {backPhotos.length}
+                      </span>
+                      <button
+                        onClick={() => setBackPhotoIndex(Math.min(backPhotos.length - 1, backPhotoIndex + 1))}
+                        disabled={backPhotoIndex === backPhotos.length - 1}
+                        className="p-1 rounded bg-gray-200 dark:bg-gray-600 disabled:opacity-30"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
+                  )}
+                  {currentBackPhoto && (
+                    <p className="text-xs text-gray-400 text-center mt-1">
+                      {new Date(currentBackPhoto.taken_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
                   )}
                 </div>
               </div>
             </Card>
           </motion.div>
-        </div>
-
-        {/* Body Metrics */}
-        <div className="space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <Card>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                Body Metrics
-              </h3>
-              
-              <div className="space-y-4">
-                {bodyMetrics.map((metric) => (
-                  <div key={metric.label} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                        <metric.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {metric.value}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {metric.label}
-                        </p>
-                      </div>
-                    </div>
-                    {metric.trend && (
-                      <span className={`text-sm font-medium ${
-                        metric.trend.startsWith('-') 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {metric.trend}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Account Stats - FIXED: Now dynamic */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <Card>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                Account Stats
-              </h3>
-              
-              {statsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Member Since</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {memberSince}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Total Workouts</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {accountStats?.total_sessions ?? 0}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Current Streak</span>
-                    <span className="font-medium text-primary">
-                      {accountStats?.current_streak ?? 0} days
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Best Streak</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {accountStats?.best_streak ?? 0} days
-                    </span>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </motion.div>
-        </div>
       </div>
 
       {/* Photo View Modal */}

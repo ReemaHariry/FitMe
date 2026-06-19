@@ -39,6 +39,7 @@ export interface AuthUser {
   name: string
   email: string
   onboarding_complete: boolean
+  created_at?: string  // ADDED: For "Member Since" display
 }
 
 /**

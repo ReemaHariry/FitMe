@@ -61,7 +61,8 @@ export const useAuthStore = create<AuthState>()(
             id: response.user.id,
             name: response.user.name,
             email: response.user.email,
-            onboarding_complete: response.user.onboarding_complete,  // FIXED: Use correct field name
+            created_at: response.user.created_at,  // ADDED
+            onboarding_complete: response.user.onboarding_complete,
           }
           
           // Update state
@@ -103,7 +104,8 @@ export const useAuthStore = create<AuthState>()(
             id: response.user.id,
             name: response.user.name,
             email: response.user.email,
-            onboarding_complete: response.user.onboarding_complete,  // FIXED: Use correct field name
+            created_at: response.user.created_at,  // ADDED
+            onboarding_complete: response.user.onboarding_complete,
           }
           
           // Update state

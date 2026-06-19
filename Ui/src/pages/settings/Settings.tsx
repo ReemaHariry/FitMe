@@ -36,11 +36,6 @@ export default function Settings() {
     return saved !== null ? saved === 'true' : true
   })
   
-  const [remindersEnabled, setRemindersEnabled] = useState(() => {
-    const saved = localStorage.getItem('reminders-enabled')
-    return saved !== null ? saved === 'true' : true
-  })
-  
   const [showLanguageSuccess, setShowLanguageSuccess] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -51,18 +46,6 @@ export default function Settings() {
     const newValue = !soundEnabled
     setSoundEnabled(newValue)
     localStorage.setItem('sound-enabled', String(newValue))
-  }
-
-  // IMPLEMENTED: Save reminders preference to localStorage
-  const handleRemindersToggle = () => {
-    const newValue = !remindersEnabled
-    setRemindersEnabled(newValue)
-    localStorage.setItem('reminders-enabled', String(newValue))
-    
-    if (newValue) {
-      // Set last check date to now when enabling
-      localStorage.setItem('last-reminder-check', new Date().toISOString())
-    }
   }
 
   const handleLogout = () => {
@@ -315,29 +298,6 @@ export default function Settings() {
                     type="checkbox"
                     checked={soundEnabled}
                     onChange={handleSoundToggle}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                </label>
-              </div>
-            </div>
-
-            {/* Session Reminders Toggle */}
-            <div className="flex items-center justify-between py-3">
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-900 dark:text-white">
-                  Session Reminders
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Get reminded to train if you haven't worked out in 2+ days
-                </p>
-              </div>
-              <div className="ml-4">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={remindersEnabled}
-                    onChange={handleRemindersToggle}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>

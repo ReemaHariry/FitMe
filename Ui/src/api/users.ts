@@ -23,6 +23,18 @@ export interface ProfileData {
   preferred_workout_duration: number
 }
 
+// ADDED: Interface for partial profile updates (PUT endpoint)
+export interface UpdateProfileRequest {
+  full_name?: string
+  gender?: 'male' | 'female'
+  age?: number
+  height?: number
+  weight?: number
+  fitness_goal?: 'lose_weight' | 'build_muscle' | 'maintain'
+  training_days_per_week?: number
+  preferred_workout_duration?: number
+}
+
 /**
  * Response after saving profile
  */
@@ -129,6 +141,30 @@ export const usersApi = {
   },
 
   /**
+   * Update user profile with partial data (ADDED - Fix for Problem 1)
+   * 
+   * @param data - Profile fields to update (all optional)
+   * @returns Promise with updated profile data
+   * 
+   * @throws Error if update fails (400, 401, 500, etc.)
+   * 
+   * @example
+   * try {
+   *   const updated = await usersApi.updateProfile({
+   *     age: 26,
+   *     weight: 72
+   *   })
+   *   console.log('Profile updated:', updated)
+   * } catch (error) {
+   *   console.error('Failed to update profile:', error.message)
+   * }
+   */
+  updateProfile: async (data: UpdateProfileRequest): Promise<ProfileDataResponse> => {
+    const response = await apiClient.put<ProfileDataResponse>('/users/profile', data)
+    return response.data
+  },
+
+  /**
    * Get all progress photos for the current user
    * 
    * @returns Promise with array of progress photos
@@ -222,6 +258,7 @@ export const usersApi = {
 export const { 
   saveProfile, 
   getProfile,
+  updateProfile,  // ADDED
   getProgressPhotos,
   uploadProgressPhoto,
   deleteProgressPhoto

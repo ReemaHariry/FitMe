@@ -67,11 +67,17 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
   const changeContext = change !== null ? getWeightGoalContext(change, fitnessGoal) : null
   const weeklyContext = weeklyChange !== null ? getWeightGoalContext(weeklyChange, fitnessGoal) : null
 
-  // Prepare chart data
-  const chartData = logs.map(log => ({
-    date: new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    weight: log.weight_kg
-  }))
+  // FIXED (Problem 5): Deduplicate chart data by date to avoid duplicate x-axis labels
+  const chartDataMap = new Map<string, { date: string; weight: number }>()
+  logs.forEach(log => {
+    const dateKey = new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    // Keep only the latest entry for each date
+    chartDataMap.set(dateKey, {
+      date: dateKey,
+      weight: log.weight_kg
+    })
+  })
+  const chartData = Array.from(chartDataMap.values())
 
   const minWeight = logs.length > 0 ? Math.min(...logs.map(l => l.weight_kg)) - 2 : 0
   const maxWeight = logs.length > 0 ? Math.max(...logs.map(l => l.weight_kg)) + 2 : 100
@@ -111,35 +117,36 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
               <span className="text-lg text-gray-500">kg</span>
             </div>
             
-            {changeContext && (
+            {/* FIXED (Problem 4): Clearer labeling for weight changes */}
+            {changeContext && change !== null && (
               <div className="flex items-center gap-2 text-sm">
-                {change! > 0 ? (
+                {change > 0 ? (
                   <TrendingUp className={`w-4 h-4 ${changeContext.color}`} />
-                ) : change! < 0 ? (
+                ) : change < 0 ? (
                   <TrendingDown className={`w-4 h-4 ${changeContext.color}`} />
                 ) : (
                   <Minus className="w-4 h-4 text-gray-500" />
                 )}
                 <span className={changeContext.color}>
-                  {changeContext.label} since last log
+                  {change > 0 ? '+' : ''}{change.toFixed(1)} kg since last log
                 </span>
               </div>
             )}
 
-            {/* Weekly Change Pill */}
-            {weeklyContext && weeklyChange !== null && (
+            {/* Weekly Change Pill (FIXED - Problem 4: Consistent labeling) */}
+            {weeklyContext && weeklyChange !== null && Math.abs(weeklyChange) >= 0.1 && (
               <div className="mt-2">
                 <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                  weeklyContext.isPositive && trend === 'losing' 
+                  trend === 'losing'
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : weeklyContext.isPositive && trend === 'gaining'
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                    : trend === 'gaining'
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                 }`}>
                   {trend === 'losing' && '📉'}
                   {trend === 'gaining' && '📈'}
                   {trend === 'maintaining' && '⚖️'}
-                  {trend === 'losing' ? 'Lost' : trend === 'gaining' ? 'Gained' : 'Maintaining'} {Math.abs(weeklyChange).toFixed(1)} kg this week
+                  {Math.abs(weeklyChange).toFixed(1)} kg this week
                 </span>
               </div>
             )}
@@ -156,6 +163,7 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
                   tick={{ fill: '#9ca3af', fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
+                  allowDuplicatedCategory={false}
                 />
                 <YAxis
                   domain={[minWeight, maxWeight]}
