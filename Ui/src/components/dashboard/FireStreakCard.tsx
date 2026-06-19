@@ -101,52 +101,35 @@ export default function FireStreakCard({ streak, loading = false }: FireStreakCa
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-center gap-3"
+      className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm"
     >
-      {/* Flame container */}
-      <div
-        style={{
-          position: 'relative',
-          width: `${cfg.size + 20}px`,
-          height: `${cfg.size + 24}px`,
-          filter: `drop-shadow(0 0 14px ${cfg.glow})`,
-        }}
-      >
-        {cfg.layers >= 1 && (
-          <FlameShape color={cfg.colors[2] ?? cfg.colors[0]} scale={0.55} delay={0.3} speed={cfg.speed * 1.1} />
-        )}
-        {cfg.layers >= 2 && (
-          <FlameShape color={cfg.colors[1]} scale={0.75} delay={0.15} speed={cfg.speed * 0.95} />
-        )}
-        {cfg.layers >= 3 && (
-          <FlameShape color={cfg.colors[0]} scale={1} delay={0} speed={cfg.speed} />
-        )}
-        {cfg.layers >= 4 && (
-          <FlameShape color={cfg.colors[0]} scale={1.18} delay={0.1} speed={cfg.speed * 0.85} />
-        )}
-
-        {/* Streak number inside flame */}
-        <div
-          style={{ position: 'absolute', inset: 0 }}
-          className="flex items-center justify-center"
-        >
-          <span
-            className="font-black text-gray-900 dark:text-white drop-shadow-[0_2px_4px_rgba(255,255,255,0.4)] dark:drop-shadow-lg"
-            style={{ fontSize: `${Math.max(14, Math.min(28, 14 + streak))}px`, letterSpacing: '-1px' }}
-          >
-            {loading ? '·' : streak}
-          </span>
-        </div>
-      </div>
-
-      {/* Labels */}
-      <div className="text-center">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">
+      <div className="flex flex-col items-center justify-center gap-2">
+        {/* Label at top */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           Workout Streak
         </p>
-        <p className="text-sm font-semibold" style={{ color: cfg.colors[0] }}>
-          {loading ? '...' : streak === 0 ? 'No streak yet' : `${streak} day${streak !== 1 ? 's' : ''} — ${cfg.label}`}
+
+        {/* Large streak number */}
+        <p className="text-5xl font-bold text-gray-900 dark:text-white">
+          {loading ? '·' : streak}
         </p>
+
+        {/* Animated Flame + Status text at bottom */}
+        <div className="flex items-center gap-2">
+          <div
+            style={{
+              position: 'relative',
+              width: '20px',
+              height: '26px',
+              filter: `drop-shadow(0 0 6px ${cfg.glow})`,
+            }}
+          >
+            <FlameShape color={cfg.colors[0]} scale={0.35} delay={0} speed={cfg.speed} />
+          </div>
+          <span className="text-sm font-semibold" style={{ color: cfg.colors[0] }}>
+            {loading ? '...' : streak === 0 ? 'No streak yet' : `${streak} day${streak !== 1 ? 's' : ''} — ${cfg.label}`}
+          </span>
+        </div>
       </div>
     </motion.div>
   )
