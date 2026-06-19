@@ -17,7 +17,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TensorFlow warnings
 os.environ["MEDIAPIPE_DISABLE_GPU"] = "1"  # Use CPU only
 
 # Import routers
-from app.routes import auth, users, reports, videos, sessions, dashboard, weight  # NEW: Added weight
+from app.routes import auth, users, reports, videos, sessions, dashboard, weight, workout_plan, nutrition
 from app.websockets.live_handler import handle_live_session
 
 # Configure logging
@@ -160,6 +160,12 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 
 # NEW: Include weight tracking routes
 app.include_router(weight.router, prefix="/weight", tags=["weight"])
+
+# Include workout plan routes
+app.include_router(workout_plan.router, tags=["workout-plan"])
+
+# Include nutrition planner routes
+app.include_router(nutrition.router, tags=["nutrition"])
 
 
 # ============================================================================
