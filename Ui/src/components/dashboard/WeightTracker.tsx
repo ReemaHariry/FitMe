@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { weightApi, type WeightLog } from '@/api/weight'
 import { getWeightChange, getWeightGoalContext } from '@/utils/dashboardHelpers'
+import { useI18nStore } from '@/app/i18n'
 
 interface WeightTrackerProps {
   initialLogs: WeightLog[]
@@ -14,6 +15,7 @@ interface WeightTrackerProps {
 }
 
 export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }: WeightTrackerProps) {
+  const { t } = useI18nStore()
   const [logs, setLogs] = useState<WeightLog[]>(initialLogs)
   const [showInput, setShowInput] = useState(false)
   const [inputWeight, setInputWeight] = useState('')
@@ -94,7 +96,7 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Scale className="w-5 h-5" />
-            Weight Progress
+            {t('dashboard.weightProgress')}
           </h2>
           <Button
             variant="outline"
@@ -103,7 +105,7 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
             className="flex items-center gap-1"
           >
             <Plus className="w-4 h-4" />
-            Log Weight
+            {t('dashboard.logWeight')}
           </Button>
         </div>
 
@@ -114,7 +116,7 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
               <span className="text-4xl font-bold text-gray-900 dark:text-white">
                 {current.toFixed(1)}
               </span>
-              <span className="text-lg text-gray-500">kg</span>
+              <span className="text-lg text-gray-500">{t('dashboard.kg')}</span>
             </div>
             
             {/* FIXED (Problem 4): Clearer labeling for weight changes */}

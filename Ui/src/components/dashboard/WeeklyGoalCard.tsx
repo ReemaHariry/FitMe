@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Target } from 'lucide-react'
+import { useI18nStore } from '@/app/i18n'
 
 interface WeeklyGoalCardProps {
   sessionsThisWeek: number
@@ -7,6 +8,7 @@ interface WeeklyGoalCardProps {
 }
 
 export default function WeeklyGoalCard({ sessionsThisWeek, weeklyGoal }: WeeklyGoalCardProps) {
+  const { t } = useI18nStore()
   const remaining = Math.max(0, weeklyGoal - sessionsThisWeek)
   const progress = Math.min(100, (sessionsThisWeek / weeklyGoal) * 100)
   const isGoalComplete = sessionsThisWeek >= weeklyGoal
@@ -22,11 +24,11 @@ export default function WeeklyGoalCard({ sessionsThisWeek, weeklyGoal }: WeeklyG
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-primary" />
           <span className="font-semibold text-gray-900 dark:text-white">
-            Weekly Goal
+            {t('dashboard.weeklyGoal')}
           </span>
         </div>
         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {sessionsThisWeek}/{weeklyGoal} sessions
+          {t('dashboard.sessionsCount', { current: sessionsThisWeek, goal: weeklyGoal })}
         </span>
       </div>
 
@@ -41,9 +43,11 @@ export default function WeeklyGoalCard({ sessionsThisWeek, weeklyGoal }: WeeklyG
       {/* Goal Message */}
       <p className="text-sm text-gray-600 dark:text-gray-400">
         {isGoalComplete ? (
-          <span className="text-green-500 font-medium">🎉 Weekly goal complete! You did it!</span>
+          <span className="text-green-500 font-medium">{t('dashboard.weeklyGoalComplete')}</span>
         ) : (
-          `You have ${remaining} workout${remaining !== 1 ? 's' : ''} left to hit your weekly goal.`
+          remaining === 1 
+            ? t('dashboard.workoutsLeft', { count: remaining })
+            : t('dashboard.workoutsLeftPlural', { count: remaining })
         )}
       </p>
     </motion.div>

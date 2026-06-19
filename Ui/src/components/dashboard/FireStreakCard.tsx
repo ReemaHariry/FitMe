@@ -13,6 +13,7 @@
  */
 
 import { motion } from 'framer-motion'
+import { useI18nStore } from '@/app/i18n'
 
 interface FireStreakCardProps {
   streak: number
@@ -94,6 +95,7 @@ function FlameShape({ color, scale = 1, delay = 0, speed = 1 }: {
 }
 
 export default function FireStreakCard({ streak, loading = false }: FireStreakCardProps) {
+  const { t } = useI18nStore()
   const cfg = getFireConfig(streak)
 
   return (
@@ -106,7 +108,7 @@ export default function FireStreakCard({ streak, loading = false }: FireStreakCa
       <div className="flex flex-col items-center justify-center gap-2">
         {/* Label at top */}
         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          Workout Streak
+          {t('dashboard.workoutStreak')}
         </p>
 
         {/* Large streak number */}

@@ -2,12 +2,14 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import Card from '@/components/ui/Card'
 import { buildStreakCalendar } from '@/utils/dashboardHelpers'
+import { useI18nStore } from '@/app/i18n'
 
 interface StreakCalendarProps {
   activeDates: string[]
 }
 
 export default function StreakCalendar({ activeDates }: StreakCalendarProps) {
+  const { t } = useI18nStore()
   const [hoveredDate, setHoveredDate] = useState<string | null>(null)
   
   const calendar = buildStreakCalendar(activeDates)
@@ -27,10 +29,10 @@ export default function StreakCalendar({ activeDates }: StreakCalendarProps) {
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            📆 30-Day Activity
+            📆 {t('dashboard.dayActivity')}
           </h2>
           <span className="text-sm text-gray-500">
-            {activeDaysCount} active days this month
+            {t('dashboard.dayActivityDays', { count: activeDaysCount })}
           </span>
         </div>
 
@@ -93,7 +95,7 @@ export default function StreakCalendar({ activeDates }: StreakCalendarProps) {
         </div>
 
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-          Green circles = days with sessions • Today is highlighted
+          {t('dashboard.greenCirclesDays')}
         </p>
       </Card>
     </motion.div>
