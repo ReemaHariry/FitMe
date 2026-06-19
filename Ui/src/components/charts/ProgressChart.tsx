@@ -15,14 +15,14 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Dot
+  Cell
 } from 'recharts'
 import { dashboardApi, type MonthlyProgress } from '@/api/dashboard'
 import { useI18nStore } from '@/app/i18n'
@@ -90,22 +90,7 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
     return monthMap[month] || month
   }
 
-  // Custom dot component
-  const CustomDot = (props: any) => {
-    const { cx, cy, payload } = props
-    if (payload.avg_score === null) return null
-    
-    return (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={5}
-        fill="#22c55e"
-        stroke="#ffffff"
-        strokeWidth={2}
-      />
-    )
-  }
+
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -143,10 +128,10 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
   return (
     <div className={className}>
       <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="rgba(255,255,255,0.05)"
+            stroke="rgba(156,163,175,0.2)"
             vertical={false}
           />
           <XAxis
@@ -154,6 +139,7 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#9ca3af', fontSize: 12 }}
+            dy={5}
           />
           <YAxis
             domain={[0, 100]}
@@ -161,17 +147,23 @@ export default function ProgressChart({ className = '' }: ProgressChartProps) {
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#9ca3af', fontSize: 12 }}
+            width={35}
           />
-          <Tooltip content={<CustomTooltip />} />
-          <Line
-            type="monotone"
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(34,197,94,0.05)' }} />
+          <Bar
             dataKey="avg_score"
-            stroke="#22c55e"
-            strokeWidth={2}
-            dot={<CustomDot />}
-            connectNulls={false}
-          />
-        </LineChart>
+            radius={[4, 4, 0, 0]}
+            maxBarSize={48}
+            minPointSize={8}
+          >
+            {(data ?? []).map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.avg_score !== null ? '#22c55e' : '#e5e7eb'}
+              />
+            ))}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
 
       {/* Summary below chart */}
