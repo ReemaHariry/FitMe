@@ -1,5 +1,5 @@
 """
-AI Fitness Trainer API - Main Application Entry Point
+FitMe API - Main Application Entry Point
 
 This is the core FastAPI application that handles all HTTP requests.
 """
@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     Lifespan context manager for startup and shutdown events.
     Code before 'yield' runs on startup, code after 'yield' runs on shutdown.
     """
-    logger.info("AI Fitness Trainer API is starting up...")
+    logger.info("FitMe API is starting up...")
     logger.info(f"Model directory: {settings.model_dir}")
     logger.info(f"Environment: {settings.environment}")
     
@@ -109,12 +109,12 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    logger.info("AI Fitness Trainer API is shutting down...")
+    logger.info("FitMe API is shutting down...")
 
 
 # Create the FastAPI application instance
 app = FastAPI(
-    title="AI Fitness Trainer API",
+    title="FitMe API",
     version="1.0.0",
     description="Backend API for AI-powered fitness training and form correction",
     lifespan=lifespan  # Attach the lifespan context manager
@@ -187,7 +187,7 @@ async def health_check():
     
     return {
         "status": "ok",
-        "message": "AI Fitness Trainer API is running",
+        "message": "FitMe API is running",
         "version": "1.0.0",
         "environment": settings.environment,
         "model_loaded": app.state.model_loaded if hasattr(app.state, 'model_loaded') else False,
@@ -208,7 +208,7 @@ async def root():
         dict: Welcome message with links to documentation
     """
     return {
-        "message": "Welcome to AI Fitness Trainer API",
+        "message": "Welcome to FitMe API",
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health"

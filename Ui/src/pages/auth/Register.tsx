@@ -90,7 +90,7 @@ export default function Register() {
                 {...register('name')}
                 type="text"
                 label={t('auth.name')}
-                placeholder="John Doe"
+                placeholder="Your Name"
                 error={errors.name?.message}
                 className="pl-12"
               />
@@ -102,7 +102,7 @@ export default function Register() {
                 {...register('email')}
                 type="email"
                 label={t('auth.email')}
-                placeholder="john@example.com"
+                placeholder="your_email@example.com"
                 error={errors.email?.message}
                 className="pl-12"
               />

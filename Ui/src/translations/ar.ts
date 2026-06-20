@@ -11,7 +11,7 @@ export const ar = {
   'auth.dontHaveAccount': 'ليس لديك حساب؟',
   'auth.alreadyHaveAccount': 'لديك حساب بالفعل؟',
   'auth.welcomeBack': 'مرحباً بعودتك',
-  'auth.joinAIFitnessTrainer': 'انضم إلى مدرب اللياقة الذكي',
+  'auth.joinAIFitnessTrainer': 'انضم إلى FitMe',
   'auth.createAccountDescription': 'ابدأ رحلتك نحو لياقة أفضل اليوم',
   'auth.forgotPassword': 'نسيت كلمة المرور؟',
   'auth.loginFailed': 'فشل تسجيل الدخول. تحقق من بياناتك.',
@@ -70,7 +70,6 @@ export const ar = {
   'dashboard.kgSinceLastLog': 'كجم منذ آخر تسجيل',
   'dashboard.kgThisWeek': 'كجم هذا الأسبوع',
   'dashboard.kg': 'كجم',
-  'dashboard.workoutStreak': 'سلسلة التمارين',
   'dashboard.dayStreak': 'يوم — بداية جيدة',
   'dashboard.daysStreak': 'أيام — استمر!',
   'dashboard.justStarted': 'بداية جيدة',
@@ -79,7 +78,7 @@ export const ar = {
   'dashboard.unstoppable': 'لا يُقهر!',
   
   // Onboarding
-  'onboarding.welcome': 'مرحباً بك في مدرب اللياقة الذكي',
+  'onboarding.welcome': 'مرحباً بك في FitMe',
   'onboarding.gender': 'الجنس',
   'onboarding.male': 'ذكر',
   'onboarding.female': 'أنثى',

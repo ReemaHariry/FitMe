@@ -44,8 +44,8 @@ export default function WeeklyGoalCard({ sessionsThisWeek, weeklyGoal }: WeeklyG
       <p className="text-sm text-gray-600 dark:text-gray-400">
         {isGoalComplete ? null : (
           remaining === 1 
-            ? t('dashboard.workoutsLeft', { count: remaining })
-            : t('dashboard.workoutsLeftPlural', { count: remaining })
+            ? t('dashboard.workoutsLeft').replace('{count}', String(remaining))
+            : t('dashboard.workoutsLeftPlural').replace('{count}', String(remaining))
         )}
       </p>
     </motion.div>

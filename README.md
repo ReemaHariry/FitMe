@@ -1,4 +1,4 @@
-# AI Fitness Trainer - Graduation Project
+# FitMe - Graduation Project
 
 Full-stack AI-powered fitness training application with real-time form correction.
 

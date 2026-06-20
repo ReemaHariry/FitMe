@@ -32,7 +32,7 @@ export default function StreakCalendar({ activeDates }: StreakCalendarProps) {
             📆 {t('dashboard.dayActivity')}
           </h2>
           <span className="text-sm text-gray-500">
-            {t('dashboard.dayActivityDays', { count: activeDaysCount })}
+            {t('dashboard.dayActivityDays').replace('{count}', String(activeDaysCount))}
           </span>
         </div>
 

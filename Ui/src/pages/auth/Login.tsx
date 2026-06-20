@@ -71,7 +71,7 @@ export default function Login() {
               <Dumbbell className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              AI Fitness Trainer
+              FitMe
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               {t('auth.welcomeBack')}
@@ -91,7 +91,7 @@ export default function Login() {
                 {...register('email')}
                 type="email"
                 label={t('auth.email')}
-                placeholder="john@example.com"
+                placeholder="your_email@example.com"
                 error={errors.email?.message}
                 className="pl-12"
               />

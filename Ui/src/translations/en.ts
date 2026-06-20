@@ -11,7 +11,7 @@ export const en = {
   'auth.dontHaveAccount': "Don't have an account?",
   'auth.alreadyHaveAccount': 'Already have an account?',
   'auth.welcomeBack': 'Welcome back',
-  'auth.joinAIFitnessTrainer': 'Join AI Fitness Trainer',
+  'auth.joinAIFitnessTrainer': 'Join FitMe',
   'auth.createAccountDescription': 'Start your fitness journey today',
   'auth.forgotPassword': 'Forgot password?',
   'auth.loginFailed': 'Login failed. Check your credentials.',
@@ -72,7 +72,7 @@ export const en = {
   'dashboard.kg': 'kg',
   
   // Onboarding
-  'onboarding.welcome': 'Welcome to AI Fitness Trainer',
+  'onboarding.welcome': 'Welcome to FitMe',
   'onboarding.gender': 'Gender',
   'onboarding.male': 'Male',
   'onboarding.female': 'Female',
