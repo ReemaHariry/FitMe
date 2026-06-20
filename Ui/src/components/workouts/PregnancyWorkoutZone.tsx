@@ -93,24 +93,6 @@ export function PregnancyWorkoutZone() {
         </div>
       </div>
 
-      {/* Trimester Goals */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-          Goals for {currentTrimester.label}
-        </h3>
-        <ul className="space-y-2">
-          {currentTrimester.goals.map((goal, index) => (
-            <li
-              key={index}
-              className="flex items-start gap-3 text-gray-700 dark:text-gray-300"
-            >
-              <span className="text-blue-500 mt-1">✓</span>
-              <span>{goal}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
       {/* Safety Reminder Banner */}
       <div className="flex items-start gap-3 p-5 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl">
         <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />

@@ -28,7 +28,6 @@ export interface TrimesterData {
   color: string;
   gradientFrom: string;
   gradientTo: string;
-  goals: string[];
   benefits: string[];
   categories: PregnancyCategory[];
   extraWarning?: string;
@@ -42,12 +41,6 @@ export const pregnancyWorkouts: Record<1 | 2 | 3, TrimesterData> = {
     color: "#f9a8d4",
     gradientFrom: "#fce7f3",
     gradientTo: "#fdf2f8",
-    goals: [
-      "Maintain fitness without overexertion",
-      "Reduce nausea and fatigue",
-      "Keep circulation healthy",
-      "Gentle core stability (no crunches)",
-    ],
     benefits: [
       "💤 Reduces Fatigue",
       "🩸 Improves Circulation",
@@ -437,12 +430,6 @@ export const pregnancyWorkouts: Record<1 | 2 | 3, TrimesterData> = {
     color: "#fbbf24",
     gradientFrom: "#fef3c7",
     gradientTo: "#fef9e7",
-    goals: [
-      "Build strength for the growing belly",
-      "Improve posture as center of gravity shifts",
-      "Maintain cardiovascular health",
-      "Strengthen pelvic floor",
-    ],
     benefits: [
       "💪 Builds Strength",
       "🧘 Improves Posture",
@@ -576,12 +563,6 @@ export const pregnancyWorkouts: Record<1 | 2 | 3, TrimesterData> = {
     color: "#c084fc",
     gradientFrom: "#f3e8ff",
     gradientTo: "#faf5ff",
-    goals: [
-      "Prepare the body for labor",
-      "Manage discomfort (back pain, swelling, sleep)",
-      "Build endurance for labor",
-      "Practice labor positions",
-    ],
     benefits: [
       "🤰 Labor Prep",
       "💆 Pain Relief",
