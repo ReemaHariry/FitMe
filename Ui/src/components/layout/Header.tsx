@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dumbbell, User, Settings, LogOut, Moon, Sun } from 'lucide-react'
+import { User, Settings, LogOut, Moon, Sun, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuthStore } from '@/app/store'
 import { useThemeStore } from '@/app/theme'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 export default function Header() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const { theme, toggleTheme } = useThemeStore()
+  const { isOpen, toggle } = useSidebar()
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -45,20 +47,18 @@ export default function Header() {
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center">
-            <Dumbbell className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              FitMe
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Trainer
-            </p>
-          </div>
-        </div>
+        {/* Left side - Sidebar Toggle Button */}
+        <button
+          onClick={toggle}
+          className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-95"
+          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {isOpen ? (
+            <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+          ) : (
+            <ChevronRight className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+          )}
+        </button>
 
         {/* Right side - Profile with Dropdown */}
         <div className="relative" ref={dropdownRef}>
