@@ -16,7 +16,7 @@ import ReportDetail from './pages/reports/ReportDetail'
 import VideoUpload from './pages/VideoUpload'
 import Profile from './pages/profile/Profile'
 import Settings from './pages/settings/Settings'
-import WorkoutPlan from './pages/workout-plan/WorkoutPlan'
+import AICoach from './pages/ai-coach/AICoach'
 import NutritionPlanner from './pages/nutrition/NutritionPlanner'
 
 function App() {
@@ -75,7 +75,7 @@ function App() {
             <Route path="upload-video" element={<VideoUpload />} />
             <Route path="reports" element={<Reports />} />
             <Route path="reports/:id" element={<ReportDetail />} />
-            <Route path="workout-plan" element={<WorkoutPlan />} />
+            <Route path="ai-coach" element={<AICoach />} />
             <Route path="nutrition" element={<NutritionPlanner />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />

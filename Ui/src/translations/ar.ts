@@ -21,7 +21,7 @@ export const ar = {
   'nav.dashboard': 'لوحة التحكم',
   'nav.workouts': 'التمارين',
   'nav.liveTraining': 'التدريب المباشر',
-  'nav.workoutPlan': 'خطة التمرين',
+  'nav.aiCoach': 'المدرب الذكي',
   'nav.nutrition': 'التغذية',
   'nav.reports': 'التقارير',
   'nav.profile': 'الملف الشخصي',
