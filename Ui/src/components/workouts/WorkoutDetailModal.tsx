@@ -178,6 +178,7 @@ export function WorkoutDetailModal({
         exercise={selectedExercise}
         open={!!selectedExercise}
         onClose={() => setSelectedExercise(null)}
+        isKidsMode={isKidsMode}
       />
     </>
   );

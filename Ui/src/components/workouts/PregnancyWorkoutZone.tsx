@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { Heart, Clock, AlertCircle, Play, X, ChevronRight } from "lucide-react";
+import { Clock, AlertCircle, Play, X, ChevronRight } from "lucide-react";
 import { pregnancyWorkouts, PregnancyCategory, PregnancyExercise } from "../../data/pregnancyWorkouts";
 
 export function PregnancyWorkoutZone() {
@@ -197,8 +197,6 @@ function PregnancyWorkoutCard({
   trimesterColor,
   onStartWorkout,
 }: PregnancyWorkoutCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
-
   const displayedExercises = category.exercises.slice(0, 3);
   const remainingCount = category.exercises.length - 3;
 
@@ -209,21 +207,6 @@ function PregnancyWorkoutCard({
         borderColor: `${trimesterColor}30`,
       }}
     >
-      {/* Favorite Heart */}
-      <button
-        onClick={() => setIsFavorite(!isFavorite)}
-        className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        aria-label="Toggle favorite"
-      >
-        <Heart
-          className={`w-5 h-5 ${
-            isFavorite
-              ? "fill-rose-500 text-rose-500"
-              : "text-gray-400 dark:text-gray-500"
-          }`}
-        />
-      </button>
-
       {/* Emoji Icon */}
       <div
         className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4"

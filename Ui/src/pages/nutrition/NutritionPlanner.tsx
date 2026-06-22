@@ -83,11 +83,11 @@ function MacroBar({
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-600">{label}</span>
-        <span className="font-semibold">{value}g</span>
+        <span className="text-gray-600 dark:text-gray-400">{label}</span>
+        <span className="font-semibold text-gray-900 dark:text-white">{value}g</span>
       </div>
 
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <motion.div
           className={`h-full ${color}`}
           initial={{ width: 0 }}
@@ -102,24 +102,29 @@ function MacroBar({
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
 function StatCard({
-  label, value, unit, icon, bg,
+  label, value, unit, icon, iconColor, iconBgColor,
 }: {
   label: string
   value: string | number
   unit: string
   icon: React.ReactNode
-  bg: string
+  iconColor: string
+  iconBgColor: string
 }) {
   return (
-    <Card className={`p-4 ${bg}`}>
-      <div className="flex justify-between items-center">
-        <p className="text-xs font-bold uppercase text-gray-500">{label}</p>
-        {icon}
+    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+      <div className="flex justify-between items-center mb-3">
+        <p className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">{label}</p>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBgColor}`}>
+          <div className={iconColor}>
+            {icon}
+          </div>
+        </div>
       </div>
 
-      <p className="text-3xl font-bold mt-2">{value}</p>
-      <p className="text-xs text-gray-500">{unit}</p>
-    </Card>
+      <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{unit}</p>
+    </div>
   )
 }
 
@@ -159,12 +164,12 @@ export default function BodyCalculations() {
 
   if (!token) {
     return (
-      <Card className="p-6 flex items-center gap-3">
-        <Lock className="w-5 h-5 text-gray-400" />
-        <p className="text-sm text-gray-600">
+      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 shadow-sm flex items-center gap-3">
+        <Lock className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Log in to see your nutrition plan.
         </p>
-      </Card>
+      </div>
     )
   }
 
@@ -185,8 +190,8 @@ export default function BodyCalculations() {
       <div className="flex items-center gap-3">
         <Scale className="w-6 h-6 text-orange-500" />
         <div>
-          <h1 className="text-xl font-bold">Body Calculations</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Body Calculations</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Personalized calorie & macro targets
           </p>
         </div>
@@ -194,50 +199,50 @@ export default function BodyCalculations() {
 
       {/* LOADING */}
       {loading && (
-        <p className="text-sm text-gray-500">Calculating your plan...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Calculating your plan...</p>
       )}
 
       {/* PROFILE CARD */}
       {profile && (
-        <Card className="p-4 space-y-3">
+        <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm space-y-3">
 
           <div className="flex flex-wrap gap-2 text-xs">
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
+            <span className="bg-gray-100 dark:bg-gray-700/50 text-gray-900 dark:text-gray-300 px-3 py-1 rounded-full font-medium">
               Height: {profile.height} cm
             </span>
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
+            <span className="bg-gray-100 dark:bg-gray-700/50 text-gray-900 dark:text-gray-300 px-3 py-1 rounded-full font-medium">
               Weight: {profile.weight} kg
             </span>
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
+            <span className="bg-gray-100 dark:bg-gray-700/50 text-gray-900 dark:text-gray-300 px-3 py-1 rounded-full font-medium">
               Goal: {goalLabel}
             </span>
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
+            <span className="bg-gray-100 dark:bg-gray-700/50 text-gray-900 dark:text-gray-300 px-3 py-1 rounded-full font-medium">
               Activity: {activity}
             </span>
           </div>
 
           {/* EXPLANATION CARD */}
-          <div className="border-t pt-3 text-xs text-gray-600 space-y-1">
-            <p className="font-semibold flex items-center gap-1">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+            <p className="font-semibold flex items-center gap-1 text-gray-900 dark:text-gray-200">
               <Info className="w-3 h-3" />
               What your body stats mean
             </p>
 
             <p>
-              • <b>BMR</b>: Calories your body burns just to stay alive
+              • <span className="font-semibold text-gray-900 dark:text-gray-200">BMR</span>: Calories your body burns just to stay alive
             </p>
             <p>
-              • <b>TDEE</b>: Total daily calories including movement
+              • <span className="font-semibold text-gray-900 dark:text-gray-200">TDEE</span>: Total daily calories including movement
             </p>
             <p>
-              • <b>Calories Target</b>: What you should eat daily for your goal
+              • <span className="font-semibold text-gray-900 dark:text-gray-200">Calories Target</span>: What you should eat daily for your goal
             </p>
             <p>
-              • <b>BMI</b>: General weight-to-height health indicator
+              • <span className="font-semibold text-gray-900 dark:text-gray-200">BMI</span>: General weight-to-height health indicator
             </p>
           </div>
 
-        </Card>
+        </div>
       )}
 
       {/* ERROR */}
@@ -257,36 +262,40 @@ export default function BodyCalculations() {
               label="BMR"
               value={Math.round(result.bmr)}
               unit="cal/day"
-              icon={<Flame />}
-              bg="bg-orange-50"
+              icon={<Flame className="w-5 h-5" />}
+              iconColor="text-orange-500"
+              iconBgColor="bg-orange-500/10"
             />
             <StatCard
               label="TDEE"
               value={Math.round(result.tdee)}
               unit="cal/day"
-              icon={<Flame />}
-              bg="bg-red-50"
+              icon={<Flame className="w-5 h-5" />}
+              iconColor="text-orange-500"
+              iconBgColor="bg-orange-500/10"
             />
             <StatCard
               label="Target"
               value={Math.round(result.target_calories)}
               unit="cal/day"
-              icon={<TrendingDown />}
-              bg="bg-blue-50"
+              icon={<TrendingDown className="w-5 h-5" />}
+              iconColor="text-blue-400"
+              iconBgColor="bg-blue-400/10"
             />
             <StatCard
               label="BMI"
               value={result.bmi}
               unit={result.bmi_category}
-              icon={<CheckCircle />}
-              bg="bg-green-50"
+              icon={<CheckCircle className="w-5 h-5" />}
+              iconColor="text-green-500"
+              iconBgColor="bg-green-500/10"
             />
           </div>
 
           {/* MACROS */}
-          <Card className="p-5 space-y-4">
-            <h2 className="font-bold flex items-center gap-2">
-              <Scale className="w-5 h-5" />
+          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-5 shadow-sm space-y-4">
+            <h2 className="font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+              <Scale className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               Macros Breakdown
             </h2>
 
@@ -308,7 +317,7 @@ export default function BodyCalculations() {
               max={120}
               color="bg-yellow-500"
             />
-          </Card>
+          </div>
 
         </div>
       )}

@@ -14,12 +14,14 @@ interface ExerciseDetailModalProps {
   exercise: Exercise | InjurySafeExercise | null;
   open: boolean;
   onClose: () => void;
+  isKidsMode?: boolean; // NEW: Flag to indicate if this is a kids exercise
 }
 
 export function ExerciseDetailModal({
   exercise,
   open,
   onClose,
+  isKidsMode = false, // NEW: Default to false
 }: ExerciseDetailModalProps) {
   const [activeLevel, setActiveLevel] = useState<DifficultyLevel>("beginner");
 
@@ -27,21 +29,30 @@ export function ExerciseDetailModal({
 
   const isSafe = isInjurySafeExercise(exercise);
 
-  // For injury-safe exercises, use the flat fields directly
+  // For kids mode OR injury-safe exercises, use a single video
+  // For kids: use beginner level since all levels have the same video
   const videoUrl = isSafe
     ? (exercise as InjurySafeExercise).videoUrl
+    : isKidsMode
+    ? (exercise as Exercise).levels.beginner.videoUrl // Kids: use beginner video (same as all levels)
     : (exercise as Exercise).levels[activeLevel].videoUrl;
 
   const steps = isSafe
     ? (exercise as InjurySafeExercise).steps
+    : isKidsMode
+    ? (exercise as Exercise).levels.beginner.steps // Kids: use beginner steps
     : (exercise as Exercise).levels[activeLevel].steps;
 
   const tips = isSafe
     ? (exercise as InjurySafeExercise).tips
+    : isKidsMode
+    ? (exercise as Exercise).levels.beginner.tips // Kids: use beginner tips
     : (exercise as Exercise).levels[activeLevel].tips;
 
   const levelLabel = isSafe
     ? "Injury-Safe Version"
+    : isKidsMode
+    ? exercise.name // Kids: just show the exercise name
     : (exercise as Exercise).levels[activeLevel].label;
 
   return (
@@ -93,8 +104,8 @@ export function ExerciseDetailModal({
               </div>
             )}
 
-            {/* Level Tabs — only for normal exercises */}
-            {!isSafe && (
+            {/* Level Tabs — only for normal exercises (not injury-safe, not kids mode) */}
+            {!isSafe && !isKidsMode && (
               <div className="flex gap-2 mb-6">
                 {(["beginner", "intermediate", "advanced"] as DifficultyLevel[]).map((level) => (
                   <button
@@ -112,10 +123,12 @@ export function ExerciseDetailModal({
               </div>
             )}
 
-            {/* Level Label */}
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              {levelLabel}
-            </h3>
+            {/* Level Label — hide for kids mode since we show exercise name in header */}
+            {!isKidsMode && (
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                {levelLabel}
+              </h3>
+            )}
 
             {/* YouTube Video */}
             <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-xl mb-6">

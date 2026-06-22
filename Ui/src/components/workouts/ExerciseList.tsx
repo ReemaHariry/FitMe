@@ -3,7 +3,7 @@
  * Displays all exercises in a workout with timer controls
  */
 
-import { Play } from "lucide-react";
+import { Clock } from "lucide-react";
 import { Exercise, InjurySafeExercise } from "../../types/workout.types";
 import { isInjurySafeExercise } from "../../data/injuryData";
 
@@ -38,9 +38,6 @@ export function ExerciseList({
           >
             <button onClick={() => onExerciseClick(exercise)} className="flex-1 text-left">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
-                  {index + 1}
-                </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
@@ -65,7 +62,7 @@ export function ExerciseList({
               className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all ml-4"
               aria-label="start timer"
             >
-              <Play className="w-5 h-5" />
+              <Clock className="w-5 h-5" />
             </button>
           </div>
         );
