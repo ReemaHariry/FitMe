@@ -19,8 +19,8 @@ export const en = {
   
   // Navigation
   'nav.dashboard': 'Dashboard',
-  'nav.workouts': 'Workouts',
-  'nav.liveTraining': 'Live Training',
+  'nav.workouts': 'Guided Training',
+  'nav.liveTraining': 'Real-Time Training',
   'nav.aiCoach': 'AI Coach',
   'nav.nutrition': 'Nutrition',
   'nav.reports': 'Reports',
@@ -92,7 +92,7 @@ export const en = {
   'onboarding.of': 'of',
   
   // Workouts
-  'workouts.title': 'Workouts',
+  'workouts.title': 'Guided Training',
   'workouts.subtitle': 'Smart adaptive workouts — automatically adjusted for your needs',
   'workouts.workoutMode': 'Workout Mode',
   'workouts.normal': 'Normal',
@@ -117,8 +117,8 @@ export const en = {
   'workouts.intermediate': 'Intermediate',
   'workouts.advanced': 'Advanced',
   
-  // Live Training
-  'liveTraining.title': 'Live Training',
+  // Live Training (now Real-Time Training)
+  'liveTraining.title': 'Real-Time Training',
   'liveTraining.subtitle': 'AI-powered training with real-time feedback',
   'liveTraining.startTraining': 'Start Training',
   'liveTraining.stopTraining': 'Stop Training',
@@ -307,10 +307,10 @@ export const en = {
   
   // Kids Workouts
   'kids.title': 'Kids Workout Zone! 🌟',
-  'kids.subtitle': 'Fun exercises just for you! Pick a workout and let\'s move! 🎉',
+  'kids.subtitle': "Fun exercises just for you! Pick a workout and let's move! 🎉",
   'kids.funWorkoutsReady': '{count} fun workouts ready for you! 🎉',
   
-  // AI Feedback Messages (from backend form_checks.py)
+  // AI Feedback Messages
   'aiFeedback.goodForm': 'Good Form',
   'aiFeedback.straightenBack': 'Straighten your back',
   'aiFeedback.bendElbowsMore': 'Bend elbows more (too straight)',
@@ -322,7 +322,7 @@ export const en = {
   'aiFeedback.curlUpMore': 'Curl up more (not enough range)',
   'aiFeedback.dontPullNeck': "Don't pull your neck forward",
   
-  // Mistake Types (from backend mistake_classifier.py)
+  // Mistake Types
   'mistake.backNotStraight': 'Back not straight',
   'mistake.elbowsTooStraight': 'Elbows too straight',
   'mistake.goingTooLow': 'Going too low',
@@ -334,7 +334,7 @@ export const en = {
   'mistake.neckStrain': 'Neck strain',
   'mistake.formIssue': 'Form issue',
   
-  // Additional UI translations
+  // Additional UI
   'workouts.upperBody': 'Upper Body',
   'workouts.lowerBody': 'Lower Body',
   'workouts.fullBody': 'Full Body',
@@ -367,4 +367,8 @@ export const en = {
   'dashboard.welcomeBack': 'Welcome back',
   'dashboard.excellent': 'Excellent',
   'dashboard.workoutSession': 'Workout Session',
+
+  // New feature nav keys
+  
+  'nav.workoutPlan': 'Workout Plan',
 }

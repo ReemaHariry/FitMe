@@ -1,4 +1,4 @@
-import { Heart, Clock, Dumbbell, Shield } from "lucide-react";
+import { Clock, Dumbbell, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { SmartWorkout } from "../../types/workout.types";
 import { KidsAvatar } from "./KidsAvatar";
@@ -13,11 +13,9 @@ interface WorkoutCardProps {
   isKidsMode?: boolean;
 }
 
-// Map workout title to avatar pose
 const titleToPose: Record<string, "jumping" | "squatting" | "running" | "stretching" | "dancing" | "pushup" | "default"> = {
   "Adventure Quest": "jumping",
   "Animal Kingdom":  "squatting",
-  "Space Explorer":  "running",
   "Ninja Training":  "pushup",
   "Dance Party":     "dancing",
 };
@@ -42,6 +40,11 @@ export function WorkoutCard({
     crossfit: "Cardio", calisthenics: "Calisthenics",
   };
 
+  // Change 2: type badge uses slate/blue instead of green so it doesn't
+  // clash with the Beginner (green) difficulty badge
+  const typeBadgeClass = "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200";
+
+  // Difficulty badge colors — Advanced stays red, others unchanged
   const difficultyColors: Record<string, string> = {
     beginner:     "bg-green-500/10 text-green-600 dark:text-green-400",
     intermediate: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
@@ -78,16 +81,9 @@ export function WorkoutCard({
             <KidsAvatar pose={pose} size={80} />
           </div>
 
-          {/* Favorite */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleFavorite(workout.id); }}
-            className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/30 hover:bg-white/60 transition-all"
-          >
-            <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-white"}`} />
-          </button>
+          {/* Change 6: heart icon removed — no favorite button in kids card */}
 
           <div className="flex-1">
-            {/* Exercise names preview */}
             <div className="space-y-1.5 mb-4">
               {workout.exercises.slice(0, 3).map((ex) => (
                 <div key={ex.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
@@ -125,12 +121,7 @@ export function WorkoutCard({
       <Card className="h-full flex flex-col relative overflow-hidden group">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />
 
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite(workout.id); }}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 transition-all"
-        >
-          <Heart className={`w-5 h-5 transition-all ${isFavorite ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`} />
-        </button>
+        {/* Change 6: heart / favorite button completely removed */}
 
         <div className="flex-1 pt-4">
           {workout.isModified && workout.modeBadge && (
@@ -140,12 +131,14 @@ export function WorkoutCard({
             </div>
           )}
 
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 pr-10">
+          {/* Title — no longer needs pr-10 padding since heart is gone */}
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
             {workout.title}
           </h3>
 
           <div className="flex gap-2 mb-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+            {/* Change 2: type badge is now slate/blue instead of primary green */}
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${typeBadgeClass}`}>
               {typeLabels[workout.type]}
             </span>
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${difficultyColors[workout.difficulty]}`}>

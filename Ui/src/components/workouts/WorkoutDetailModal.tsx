@@ -1,4 +1,4 @@
-import { X, Clock, Dumbbell, CheckCircle, Shield } from "lucide-react";
+import { X, Clock, Dumbbell, Shield } from "lucide-react";
 import { useState } from "react";
 import { SmartWorkout, Workout, RuntimeExercise, UserSettings } from "../../types/workout.types";
 import { ExerciseList } from "./ExerciseList";
@@ -8,9 +8,6 @@ import { InjuryBanner } from "./InjuryBanner";
 import { KidsAvatar } from "./KidsAvatar";
 import Button from "../ui/Button";
 
-/**
- * Helper function to get swapped exercises between original and adapted workout
- */
 function getSwappedExercises(
   original: Workout,
   adapted: { exercises: RuntimeExercise[] }
@@ -49,23 +46,23 @@ export function WorkoutDetailModal({
     ? getSwappedExercises(originalWorkout, workout)
     : [];
 
-  const handleMarkCompleted = () => {
-    const history = JSON.parse(localStorage.getItem("fitapp_workout_history") || "[]");
-    history.push({ workoutId: workout.id, completedAt: new Date().toISOString(), title: workout.title });
-    localStorage.setItem("fitapp_workout_history", JSON.stringify(history));
-    onClose();
-  };
-
   const isKidsMode = userSettings.mode === "child";
 
-  // FIXED: Cast injuryType to InjuryMode for legacy InjuryBanner compatibility
   const legacyInjuryMode: "none" | "knee" | "back" | "shoulder" =
     userSettings.injuryType && userSettings.injuryType !== "none"
-      ? (userSettings.injuryType.includes('knee') ? 'knee' 
+      ? (userSettings.injuryType.includes('knee') ? 'knee'
          : userSettings.injuryType.includes('back') ? 'back'
          : userSettings.injuryType.includes('shoulder') ? 'shoulder'
          : 'none')
       : "none";
+
+  // Change 3: Advanced difficulty gets red styling inside the modal
+  const difficultyBadgeClass =
+    workout.difficulty === "advanced"
+      ? "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700"
+      : workout.difficulty === "intermediate"
+      ? "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+      : "bg-green-500/10 text-green-700 dark:text-green-400";
 
   return (
     <>
@@ -75,7 +72,7 @@ export function WorkoutDetailModal({
         <div className="flex min-h-full items-center justify-center p-4">
           <div className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto ${isKidsMode ? "border-4 border-purple-300 dark:border-purple-600" : ""}`}>
 
-            {/* Header */}
+            {/* Header — Change 6: no heart icon anywhere in this header */}
             <div className={`sticky top-0 border-b border-gray-200 dark:border-gray-700 p-6 flex items-start justify-between z-10 ${isKidsMode ? "bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-yellow-500/10 dark:from-purple-900/30 dark:via-pink-900/30 dark:to-yellow-900/30" : "bg-white dark:bg-gray-800"}`}>
               <div className="flex-1 flex items-center gap-4">
                 {isKidsMode && <KidsAvatar pose="dancing" size={70} />}
@@ -96,8 +93,9 @@ export function WorkoutDetailModal({
                         {workout.exercises.length} {isKidsMode ? "activities" : "exercises"}
                       </span>
                     </div>
+                    {/* Change 3: difficulty badge with red for advanced */}
                     {!isKidsMode && (
-                      <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">
+                      <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${difficultyBadgeClass}`}>
                         {workout.difficulty.charAt(0).toUpperCase() + workout.difficulty.slice(1)}
                       </span>
                     )}
@@ -117,12 +115,10 @@ export function WorkoutDetailModal({
 
             {/* Content */}
             <div className="p-6 space-y-6">
-              {/* Injury Banner */}
               {legacyInjuryMode !== "none" && (
                 <InjuryBanner injuryMode={legacyInjuryMode} swappedExercises={swappedExercises} />
               )}
 
-              {/* Pregnancy notice */}
               {userSettings.mode === "pregnant" && (
                 <div className="p-4 bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 rounded-xl">
                   <p className="text-sm text-pink-800 dark:text-pink-200">
@@ -131,7 +127,6 @@ export function WorkoutDetailModal({
                 </div>
               )}
 
-              {/* Kids encouragement banner */}
               {isKidsMode && (
                 <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-200 dark:border-purple-800 rounded-xl flex items-center gap-3">
                   <span className="text-2xl">🎉</span>
@@ -141,7 +136,6 @@ export function WorkoutDetailModal({
                 </div>
               )}
 
-              {/* Timers */}
               {timerExercise && !showRestTimer && (
                 <TimerComponent
                   durationSeconds={60}
@@ -157,7 +151,6 @@ export function WorkoutDetailModal({
                 />
               )}
 
-              {/* Exercise List */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   {isKidsMode ? "🎮 Activities" : "Exercises"}
@@ -171,12 +164,10 @@ export function WorkoutDetailModal({
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6 flex gap-3">
-              <Button onClick={onClose} variant="secondary" className="flex-1">Close</Button>
-              <Button onClick={handleMarkCompleted} className={`flex-1 ${isKidsMode ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-gradient-to-r from-primary to-accent"}`}>
-                <CheckCircle className="w-5 h-5 mr-2" />
-                {isKidsMode ? "🏆 I Did It!" : "Mark as Completed"}
+            {/* Footer — Change 5: only Close button, Mark as Completed removed */}
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
+              <Button onClick={onClose} variant="secondary" className="w-full">
+                Close
               </Button>
             </div>
           </div>
