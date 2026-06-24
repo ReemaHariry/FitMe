@@ -30,13 +30,13 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Star Jumps",
             videoUrl: "https://www.youtube.com/embed/Sh8JdIFZdv8",
-            steps: ["Stand with feet together","Jump and spread arms and legs like a star!","Jump back together","Repeat and have fun!"],
-            tips: ["Land softly like a cat 🐱","Smile while you do it! 😄"]
+            steps: ["Stand with feet together", "Jump and spread arms and legs like a star!", "Jump back together", "Repeat and have fun!"],
+            tips: ["Land softly like a cat 🐱", "Smile while you do it! 😄"]
           },
           intermediate: {
             label: "Star Jumps",
             videoUrl: "https://www.youtube.com/embed/Sh8JdIFZdv8",
-            steps: ["Jump wide and high!","Make the biggest star shape you can!"],
+            steps: ["Jump wide and high!", "Make the biggest star shape you can!"],
             tips: ["Go faster! 🚀"]
           },
           advanced: {
@@ -55,8 +55,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Frog Jumps",
             videoUrl: "https://www.youtube.com/embed/xvFlSThUpgw",
-            steps: ["Squat down low like a frog 🐸","Put hands on the floor","Jump forward as far as you can!","Land in squat position"],
-            tips: ["Ribbit! Make frog sounds! 🐸","Land with soft knees"]
+            steps: ["Squat down low like a frog 🐸", "Put hands on the floor", "Jump forward as far as you can!", "Land in squat position"],
+            tips: ["Ribbit! Make frog sounds! 🐸", "Land with soft knees"]
           },
           intermediate: {
             label: "Frog Jumps",
@@ -80,8 +80,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Bear Crawl",
             videoUrl: "https://www.youtube.com/embed/Q5ibn8kBhyU",
-            steps: ["Get on hands and feet (not knees!)","Walk forward like a bear 🐻","Move opposite hand and foot together","Growl like a bear! ROAR!"],
-            tips: ["Keep your back flat like a table","You're a mighty bear! 🐻"]
+            steps: ["Get on hands and feet (not knees!)", "Walk forward like a bear 🐻", "Move opposite hand and foot together", "Growl like a bear! ROAR!"],
+            tips: ["Keep your back flat like a table", "You're a mighty bear! 🐻"]
           },
           intermediate: {
             label: "Bear Crawl",
@@ -105,8 +105,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Superhero Pose",
             videoUrl: "https://www.youtube.com/embed/7i0tUVNHfLA",
-            steps: ["Stand tall and proud","Put hands on hips like a superhero 🦸","Hold the pose for 15 seconds","Feel your superpowers!"],
-            tips: ["You ARE a superhero! 💪","Stand as tall as possible!"]
+            steps: ["Stand tall and proud", "Put hands on hips like a superhero 🦸", "Hold the pose for 15 seconds", "Feel your superpowers!"],
+            tips: ["You ARE a superhero! 💪", "Stand as tall as possible!"]
           },
           intermediate: {
             label: "Superhero Pose",
@@ -144,9 +144,9 @@ export const KIDS_WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Crab Walk",
-            videoUrl: "https://www.youtube.com/embed/gRCLBwenYh0",
-            steps: ["Sit on the floor","Put hands behind you, feet in front","Lift your bottom off the floor","Walk sideways like a crab! 🦀"],
-            tips: ["Snap your claws! ✂️","Keep your tummy up high"]
+            videoUrl: "https://www.youtube.com/embed/Ix4GWyawOoc",
+            steps: ["Sit on the floor", "Put hands behind you, feet in front", "Lift your bottom off the floor", "Walk sideways like a crab! 🦀"],
+            tips: ["Snap your claws! ✂️", "Keep your tummy up high"]
           },
           intermediate: {
             label: "Crab Walk",
@@ -170,8 +170,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Bunny Hops",
             videoUrl: "https://www.youtube.com/embed/JlFzzPA6Ixg",
-            steps: ["Stand with feet together","Bend knees slightly","Jump forward with both feet together 🐰","Land softly and hop again!"],
-            tips: ["Wiggle your nose like a bunny! 🐰","Keep feet together"]
+            steps: ["Stand with feet together", "Bend knees slightly", "Jump forward with both feet together 🐰", "Land softly and hop again!"],
+            tips: ["Wiggle your nose like a bunny! 🐰", "Keep feet together"]
           },
           intermediate: {
             label: "Bunny Hops",
@@ -195,8 +195,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Elephant Stomps",
             videoUrl: "https://www.youtube.com/embed/iaDObq8oPOk",
-            steps: ["Stand with feet wide apart","Bend forward and let arms hang like a trunk 🐘","March in place lifting knees high","Stomp like a big elephant!"],
-            tips: ["Make elephant sounds! 🐘","Swing your trunk (arms)!"]
+            steps: ["Stand with feet wide apart", "Bend forward and let arms hang like a trunk 🐘", "March in place lifting knees high", "Stomp like a big elephant!"],
+            tips: ["Make elephant sounds! 🐘", "Swing your trunk (arms)!"]
           },
           intermediate: {
             label: "Elephant Stomps",
@@ -220,8 +220,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Snake Stretch",
             videoUrl: "https://www.youtube.com/embed/MwkTE1wgmV4",
-            steps: ["Lie on your tummy","Put hands under shoulders","Push up and look at the ceiling 🐍","Hiss like a snake! Ssssss!"],
-            tips: ["Feel your tummy stretch","Hissss! 🐍"]
+            steps: ["Lie on your tummy", "Put hands under shoulders", "Push up and look at the ceiling 🐍", "Hiss like a snake! Ssssss!"],
+            tips: ["Feel your tummy stretch", "Hissss! 🐍"]
           },
           intermediate: {
             label: "Snake Stretch",
@@ -260,8 +260,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Ninja Push-ups",
             videoUrl: "https://www.youtube.com/embed/l9OztEblW0U",
-            steps: ["Get on hands and knees — ninja position! 🥷","Lower your chest to the ground","Push back up with ninja strength!","Say 'HI-YA!' when you push up!"],
-            tips: ["Ninjas are strong AND quiet! 🥷","Keep your back straight"]
+            steps: ["Get on hands and knees — ninja position! 🥷", "Lower your chest to the ground", "Push back up with ninja strength!", "Say 'HI-YA!' when you push up!"],
+            tips: ["Ninjas are strong AND quiet! 🥷", "Keep your back straight"]
           },
           intermediate: {
             label: "Ninja Push-ups",
@@ -285,8 +285,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Eagle Balance",
             videoUrl: "https://www.youtube.com/embed/NOFZ6kSJdLc",
-            steps: ["Stand on one foot like an eagle 🦅","Spread arms out wide like wings","Hold for 10 seconds","Switch to the other foot"],
-            tips: ["Focus on one spot to balance","You're a mighty eagle! 🦅"]
+            steps: ["Stand on one foot like an eagle 🦅", "Spread arms out wide like wings", "Hold for 10 seconds", "Switch to the other foot"],
+            tips: ["Focus on one spot to balance", "You're a mighty eagle! 🦅"]
           },
           intermediate: {
             label: "Eagle Balance",
@@ -310,8 +310,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Dragon Squats",
             videoUrl: "https://www.youtube.com/embed/VvMfM-kJPq4",
-            steps: ["Stand with feet shoulder-width","Squat down like a dragon crouching 🐉","Hold arms out like dragon wings","Rise up and ROAR!"],
-            tips: ["ROAR like a dragon! 🐉","Sit back like you're on a throne"]
+            steps: ["Stand with feet shoulder-width", "Squat down like a dragon crouching 🐉", "Hold arms out like dragon wings", "Rise up and ROAR!"],
+            tips: ["ROAR like a dragon! 🐉", "Sit back like you're on a throne"]
           },
           intermediate: {
             label: "Dragon Squats",
@@ -335,8 +335,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Stone Warrior",
             videoUrl: "https://www.youtube.com/embed/R5S_nauWVGE",
-            steps: ["Get into plank position on hands","Be as still as a stone statue 🗿","Hold for 15 seconds","Don't let anyone move you!"],
-            tips: ["Statues don't move! 🗿","Squeeze your tummy tight"]
+            steps: ["Get into plank position on hands", "Be as still as a stone statue 🗿", "Hold for 15 seconds", "Don't let anyone move you!"],
+            tips: ["Statues don't move! 🗿", "Squeeze your tummy tight"]
           },
           intermediate: {
             label: "Stone Warrior",
@@ -375,8 +375,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Wiggle Warm-up",
             videoUrl: "https://www.youtube.com/embed/DsUPVERZFlI",
-            steps: ["Stand up and wiggle everything! 🕺","Wiggle your fingers","Wiggle your arms","Wiggle your whole body!"],
-            tips: ["There's no wrong way to wiggle! 🕺","The sillier the better! 😄"]
+            steps: ["Stand up and wiggle everything! 🕺", "Wiggle your fingers", "Wiggle your arms", "Wiggle your whole body!"],
+            tips: ["There's no wrong way to wiggle! 🕺", "The sillier the better! 😄"]
           },
           intermediate: {
             label: "Wiggle Warm-up",
@@ -400,8 +400,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Freeze Dance Squats",
             videoUrl: "https://www.youtube.com/embed/3T67w-Fy4x0",
-            steps: ["Dance around and have fun! 🎵","When you hear 'FREEZE' — squat down!","Hold the squat for 3 seconds","Then dance again!"],
-            tips: ["Dancing makes exercise fun! 🎵","Freeze like a statue! 🗿"]
+            steps: ["Dance around and have fun! 🎵", "When you hear 'FREEZE' — squat down!", "Hold the squat for 3 seconds", "Then dance again!"],
+            tips: ["Dancing makes exercise fun! 🎵", "Freeze like a statue! 🗿"]
           },
           intermediate: {
             label: "Freeze Dance Squats",
@@ -425,8 +425,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Robot Dance",
             videoUrl: "https://www.youtube.com/embed/T8Df3VZCKUc",
-            steps: ["Move like a robot! 🤖","Stiff arms, stiff legs","March in place like a robot","Make robot sounds: BEEP BOOP!"],
-            tips: ["Robots are very precise! 🤖","Keep movements sharp and stiff"]
+            steps: ["Move like a robot! 🤖", "Stiff arms, stiff legs", "March in place like a robot", "Make robot sounds: BEEP BOOP!"],
+            tips: ["Robots are very precise! 🤖", "Keep movements sharp and stiff"]
           },
           intermediate: {
             label: "Robot Dance",
@@ -450,8 +450,8 @@ export const KIDS_WORKOUTS: Workout[] = [
           beginner: {
             label: "Rainbow Stretch",
             videoUrl: "https://www.youtube.com/embed/9Yi6mNwO0Ag",
-            steps: ["Stand with feet wide apart","Reach one arm up and over like a rainbow 🌈","Feel the stretch on your side","Switch sides and make another rainbow!"],
-            tips: ["Breathe slowly 🌬️","Imagine all the rainbow colors! 🌈"]
+            steps: ["Stand with feet wide apart", "Reach one arm up and over like a rainbow 🌈", "Feel the stretch on your side", "Switch sides and make another rainbow!"],
+            tips: ["Breathe slowly 🌬️", "Imagine all the rainbow colors! 🌈"]
           },
           intermediate: {
             label: "Rainbow Stretch",

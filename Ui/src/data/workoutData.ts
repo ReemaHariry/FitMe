@@ -753,13 +753,13 @@ export const WORKOUTS: Workout[] = [
           },
           intermediate: {
             label: "Dumbbell Bulgarian Split Squat",
-            videoUrl: "https://www.youtube.com/embed/2C-uNgKwPLE",
+            videoUrl: "https://www.youtube.com/embed/Fmjj7wFJWRE",
             steps: ["Hold dumbbells at sides", "Perform split squat"],
             tips: ["Challenging single-leg exercise"]
           },
           advanced: {
             label: "Barbell Bulgarian Split Squat",
-            videoUrl: "https://www.youtube.com/embed/2C-uNgKwPLE",
+            videoUrl: "https://www.youtube.com/embed/vLo49m8GUo4",
             steps: ["Bar on back", "Deep split squat"],
             tips: ["Advanced strength builder"]
           }
@@ -900,19 +900,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Bodyweight Hip Thrust",
-            videoUrl: "https://www.youtube.com/embed/xDmFkJxPzeM",
+            videoUrl: "https://www.youtube.com/embed/7XuNzi5rcj4",
             steps: ["Shoulders on bench", "Drive hips up", "Squeeze glutes at top"],
             tips: ["Learn the movement pattern"]
           },
           intermediate: {
             label: "Dumbbell Hip Thrust",
-            videoUrl: "https://www.youtube.com/embed/xDmFkJxPzeM",
+            videoUrl: "https://www.youtube.com/embed/29OfN4ztW_g",
             steps: ["Dumbbell on hips", "Full hip extension"],
             tips: ["Controlled movement"]
           },
           advanced: {
             label: "Barbell Hip Thrust",
-            videoUrl: "https://www.youtube.com/embed/xDmFkJxPzeM",
+            videoUrl: "https://www.youtube.com/embed/pUdIL5x0fWg",
             steps: ["Barbell across hips", "Drive explosively", "Full lockout"],
             tips: ["Best glute exercise"]
           }
@@ -1039,7 +1039,7 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Knee Plank",
-            videoUrl: "https://www.youtube.com/embed/pSHjTRCQxIw",
+            videoUrl: "https://www.youtube.com/embed/Of0YDiN9p00",
             steps: ["Forearms on ground", "Knees down", "Hold straight line"],
             tips: ["Build core endurance"]
           },
@@ -1051,7 +1051,7 @@ export const WORKOUTS: Workout[] = [
           },
           advanced: {
             label: "Plank with Leg Lift",
-            videoUrl: "https://www.youtube.com/embed/pSHjTRCQxIw",
+            videoUrl: "https://www.youtube.com/embed/rGpw_cUfIAg",
             steps: ["Standard plank", "Lift one leg", "Alternate"],
             tips: ["Increased difficulty"]
           }
@@ -1091,13 +1091,13 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Light Dumbbell Thruster",
-            videoUrl: "https://www.youtube.com/embed/L219ltL15zk",
+            videoUrl: "https://www.youtube.com/embed/sLIswEpOHng",
             steps: ["Dumbbells at shoulders", "Squat down", "Stand and press overhead"],
             tips: ["Combines squat and press"]
           },
           intermediate: {
             label: "Moderate Dumbbell Thruster",
-            videoUrl: "https://www.youtube.com/embed/L219ltL15zk",
+            videoUrl: "https://www.youtube.com/embed/VdPjfmRcQfw",
             steps: ["Increase weight", "Fluid motion"],
             tips: ["Use leg drive to help press"]
           },
@@ -1129,19 +1129,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Step-Back Burpees",
-            videoUrl: "https://www.youtube.com/embed/dZgVxmf6jkA",
+            videoUrl: "https://www.youtube.com/embed/LTaZU3yIOGE",
             steps: ["Step back to plank", "Do push-up", "Step feet forward", "Stand up"],
             tips: ["Lower impact version"]
           },
           intermediate: {
             label: "Standard Burpees",
-            videoUrl: "https://www.youtube.com/embed/dZgVxmf6jkA",
+            videoUrl: "https://www.youtube.com/embed/CDySZY4g-9Q",
             steps: ["Drop to plank", "Push-up", "Jump feet to hands", "Jump up"],
             tips: ["Keep pace steady"]
           },
           advanced: {
             label: "Burpee with Tuck Jump",
-            videoUrl: "https://www.youtube.com/embed/dZgVxmf6jkA",
+            videoUrl: "https://www.youtube.com/embed/iuuDgmfdbSQ",
             steps: ["Standard burpee", "Tuck knees to chest on jump"],
             tips: ["Explosive power"]
           }
@@ -1167,7 +1167,7 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Knee Plank",
-            videoUrl: "https://www.youtube.com/embed/pSHjTRCQxIw",
+            videoUrl: "https://www.youtube.com/embed/Of0YDiN9p00",
             steps: ["Forearms and knees", "Hold position"],
             tips: ["Build endurance"]
           },
@@ -1179,7 +1179,7 @@ export const WORKOUTS: Workout[] = [
           },
           advanced: {
             label: "RKC Plank",
-            videoUrl: "https://www.youtube.com/embed/pSHjTRCQxIw",
+            videoUrl: "https://www.youtube.com/embed/4hQmAsF9iL4",
             steps: ["Standard plank", "Squeeze everything", "Posterior pelvic tilt"],
             tips: ["Maximum tension"]
           }
@@ -1219,19 +1219,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Dumbbell Deadlift to Press",
-            videoUrl: "https://www.youtube.com/embed/L219ltL15zk",
+            videoUrl: "https://www.youtube.com/embed/CV3XFmb8H0E",
             steps: ["Deadlift dumbbells", "Clean to shoulders", "Press overhead"],
             tips: ["Learn each phase separately"]
           },
           intermediate: {
             label: "Dumbbell Clean & Press",
-            videoUrl: "https://www.youtube.com/embed/L219ltL15zk",
+            videoUrl: "https://www.youtube.com/embed/sZ4XMWn8bAU",
             steps: ["Explosive clean", "Immediate press"],
             tips: ["Fluid movement"]
           },
           advanced: {
             label: "Barbell Clean & Press",
-            videoUrl: "https://www.youtube.com/embed/L219ltL15zk",
+            videoUrl: "https://www.youtube.com/embed/K1QPQBVbTKM",
             steps: ["Power clean", "Front rack", "Overhead press"],
             tips: ["Olympic lifting technique"]
           }
@@ -1295,19 +1295,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Half Turkish Get-up",
-            videoUrl: "https://www.youtube.com/embed/0bWRPC49-KI",
+            videoUrl: "https://www.youtube.com/embed/sgd8n917Zv0",
             steps: ["Lie down, arm extended", "Roll to elbow", "Push to hand", "Stop here"],
             tips: ["Learn each phase"]
           },
           intermediate: {
             label: "Turkish Get-up (Light)",
-            videoUrl: "https://www.youtube.com/embed/0bWRPC49-KI",
+            videoUrl: "https://www.youtube.com/embed/r_sJKLowdak",
             steps: ["Full movement with light weight"],
             tips: ["Slow and controlled"]
           },
           advanced: {
             label: "Turkish Get-up (Heavy)",
-            videoUrl: "https://www.youtube.com/embed/0bWRPC49-KI",
+            videoUrl: "https://www.youtube.com/embed/jgKFttG0Z7I",
             steps: ["Full movement with heavy kettlebell"],
             tips: ["Eye on the weight always"]
           }
@@ -1347,19 +1347,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Marching in Place",
-            videoUrl: "https://www.youtube.com/embed/ZZZoCNMU48U",
+            videoUrl: "https://www.youtube.com/embed/Ac8M_Osjy6s",
             steps: ["Stand tall", "Lift knees to hip height", "Alternate legs", "Pump arms"],
             tips: ["Low impact option"]
           },
           intermediate: {
             label: "High Knees",
-            videoUrl: "https://www.youtube.com/embed/ZZZoCNMU48U",
+            videoUrl: "https://www.youtube.com/embed/ymdS7tM0zws",
             steps: ["Run in place", "Drive knees up", "Fast pace"],
             tips: ["Land on balls of feet"]
           },
           advanced: {
             label: "High Knees Sprint",
-            videoUrl: "https://www.youtube.com/embed/ZZZoCNMU48U",
+            videoUrl: "https://www.youtube.com/embed/1EELa6eDwrI",
             steps: ["Maximum speed", "Full knee drive"],
             tips: ["Explosive effort"]
           }
@@ -1385,7 +1385,7 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Step Jacks",
-            videoUrl: "https://www.youtube.com/embed/c4DAnQ6DtF8",
+            videoUrl: "https://www.youtube.com/embed/JHdVMkRBuRA",
             steps: ["Step one foot out", "Raise arms", "Step back in", "Alternate sides"],
             tips: ["No jumping version"]
           },
@@ -1397,7 +1397,7 @@ export const WORKOUTS: Workout[] = [
           },
           advanced: {
             label: "Power Jacks",
-            videoUrl: "https://www.youtube.com/embed/c4DAnQ6DtF8",
+            videoUrl: "https://www.youtube.com/embed/alaZwJE20Ds",
             steps: ["Jump wide into squat", "Jump back together"],
             tips: ["Squat deep on landing"]
           }
@@ -1423,7 +1423,7 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Slow Mountain Climbers",
-            videoUrl: "https://www.youtube.com/embed/nmwgirgXLYM",
+            videoUrl: "https://www.youtube.com/embed/7LmA4zSitc4",
             steps: ["Plank position", "Bring knee to chest slowly", "Alternate legs"],
             tips: ["Controlled pace"]
           },
@@ -1435,7 +1435,7 @@ export const WORKOUTS: Workout[] = [
           },
           advanced: {
             label: "Cross-Body Mountain Climbers",
-            videoUrl: "https://www.youtube.com/embed/nmwgirgXLYM",
+            videoUrl: "https://www.youtube.com/embed/luRruRjECm8",
             steps: ["Knee to opposite elbow"],
             tips: ["Oblique engagement"]
           }
@@ -1475,19 +1475,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Step-Back Burpees",
-            videoUrl: "https://www.youtube.com/embed/dZgVxmf6jkA",
+            videoUrl: "https://www.youtube.com/embed/LTaZU3yIOGE",
             steps: ["Step back to plank", "Push-up", "Step forward", "Stand up"],
             tips: ["Low impact version"]
           },
           intermediate: {
             label: "Standard Burpees",
-            videoUrl: "https://www.youtube.com/embed/dZgVxmf6jkA",
+            videoUrl: "https://www.youtube.com/embed/CDySZY4g-9Q",
             steps: ["Drop to plank", "Push-up", "Jump feet in", "Jump up"],
             tips: ["Steady pace"]
           },
           advanced: {
             label: "Burpee Box Jumps",
-            videoUrl: "https://www.youtube.com/embed/dZgVxmf6jkA",
+            videoUrl: "https://www.youtube.com/embed/HWkusQYVQAo",
             steps: ["Burpee then jump onto box"],
             tips: ["Explosive power"]
           }
@@ -1513,7 +1513,7 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Jump Rope (Slow)",
-            videoUrl: "https://www.youtube.com/embed/FJmRQ5iTXKE",
+            videoUrl: "https://www.youtube.com/embed/u3zgHI8QnqE",
             steps: ["Basic two-foot jump", "Slow steady pace"],
             tips: ["Land on balls of feet"]
           },
@@ -1525,7 +1525,7 @@ export const WORKOUTS: Workout[] = [
           },
           advanced: {
             label: "Double Unders",
-            videoUrl: "https://www.youtube.com/embed/FJmRQ5iTXKE",
+            videoUrl: "https://www.youtube.com/embed/82jNjDS19lg",
             steps: ["Rope passes twice per jump"],
             tips: ["Explosive jump"]
           }
@@ -1551,19 +1551,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Brisk Walk Intervals",
-            videoUrl: "https://www.youtube.com/embed/ZZZoCNMU48U",
+            videoUrl: "https://www.youtube.com/embed/nmvVfgrExAg",
             steps: ["Walk fast for 20 seconds", "Rest 40 seconds", "Repeat"],
             tips: ["Build aerobic base"]
           },
           intermediate: {
             label: "Jog Intervals",
-            videoUrl: "https://www.youtube.com/embed/ZZZoCNMU48U",
+            videoUrl: "https://www.youtube.com/embed/3XbfW90grUk",
             steps: ["Jog at moderate pace", "Rest and repeat"],
             tips: ["Controlled breathing"]
           },
           advanced: {
             label: "All-Out Sprints",
-            videoUrl: "https://www.youtube.com/embed/ZZZoCNMU48U",
+            videoUrl: "https://www.youtube.com/embed/v7rjHmZRs28",
             steps: ["Maximum effort sprint", "Full recovery between sets"],
             tips: ["100% effort each interval"]
           }
@@ -1679,7 +1679,7 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Knee Plank",
-            videoUrl: "https://www.youtube.com/embed/pSHjTRCQxIw",
+            videoUrl: "https://www.youtube.com/embed/Of0YDiN9p00",
             steps: ["Forearms and knees", "Hold"],
             tips: ["Build endurance"]
           },
@@ -1691,7 +1691,7 @@ export const WORKOUTS: Workout[] = [
           },
           advanced: {
             label: "Extended Plank",
-            videoUrl: "https://www.youtube.com/embed/pSHjTRCQxIw",
+            videoUrl: "https://www.youtube.com/embed/fMoFdVEIcY8",
             steps: ["Arms extended (push-up position)", "Hold"],
             tips: ["Harder variation"]
           }
@@ -1756,19 +1756,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Assisted Pistol Squats",
-            videoUrl: "https://www.youtube.com/embed/vq5-vdgJc0I",
+            videoUrl: "https://www.youtube.com/embed/tiA23NSUm7A",
             steps: ["Hold TRX or pole", "Lower on one leg"],
             tips: ["Build balance and strength"]
           },
           intermediate: {
             label: "Box Pistol Squats",
-            videoUrl: "https://www.youtube.com/embed/vq5-vdgJc0I",
+            videoUrl: "https://www.youtube.com/embed/3HoFgXEICS8",
             steps: ["Squat to box on one leg"],
             tips: ["Controlled depth"]
           },
           advanced: {
             label: "Full Pistol Squats",
-            videoUrl: "https://www.youtube.com/embed/vq5-vdgJc0I",
+            videoUrl: "https://www.youtube.com/embed/kFognC-0BUU",
             steps: ["Full depth single-leg squat"],
             tips: ["Advanced leg strength"]
           }
@@ -1794,19 +1794,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Bench Dips",
-            videoUrl: "https://www.youtube.com/embed/0326dy_-CzM",
+            videoUrl: "https://www.youtube.com/embed/larQGD02ndE",
             steps: ["Hands on bench", "Lower and press"],
             tips: ["Easier variation"]
           },
           intermediate: {
             label: "Parallel Bar Dips",
-            videoUrl: "https://www.youtube.com/embed/2z8JmcrW-As",
+            videoUrl: "https://www.youtube.com/embed/_wUdg_4wCCk",
             steps: ["Full bodyweight dips"],
             tips: ["Control the movement"]
           },
           advanced: {
             label: "Ring Dips",
-            videoUrl: "https://www.youtube.com/embed/2z8JmcrW-As",
+            videoUrl: "https://www.youtube.com/embed/lLAibvQh_VI",
             steps: ["Gymnastic rings", "Unstable surface"],
             tips: ["Requires stability"]
           }
@@ -1846,19 +1846,19 @@ export const WORKOUTS: Workout[] = [
         levels: {
           beginner: {
             label: "Pull-up + Dip Combo",
-            videoUrl: "https://www.youtube.com/embed/eGo4IYlbE5g",
+            videoUrl: "https://www.youtube.com/embed/O_mTqWRNxmo",
             steps: ["Do a pull-up", "Transition to dip position", "Press up"],
             tips: ["Learn each phase separately"]
           },
           intermediate: {
             label: "Kipping Muscle-up",
-            videoUrl: "https://www.youtube.com/embed/eGo4IYlbE5g",
+            videoUrl: "https://www.youtube.com/embed/OCg3UXgzftc",
             steps: ["Kip for momentum", "Transition over bar"],
             tips: ["Use hip drive"]
           },
           advanced: {
             label: "Strict Muscle-up",
-            videoUrl: "https://www.youtube.com/embed/eGo4IYlbE5g",
+            videoUrl: "https://www.youtube.com/embed/vJTJFc2wmk4",
             steps: ["No kipping", "Pure strength"],
             tips: ["Elite movement"]
           }
