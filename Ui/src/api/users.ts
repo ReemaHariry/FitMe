@@ -252,6 +252,18 @@ export const usersApi = {
     )
     return response.data
   },
+
+  /**
+   * Permanently delete user account and all data
+   * 
+   * @returns Promise with success message
+   * 
+   * @throws Error if delete fails
+   */
+  deleteAccount: async (): Promise<{ message: string }> => {
+    const response = await apiClient.delete<{ message: string }>('/users/account')
+    return response.data
+  },
 }
 
 // Export individual functions for convenience
@@ -261,5 +273,6 @@ export const {
   updateProfile,  // ADDED
   getProgressPhotos,
   uploadProgressPhoto,
-  deleteProgressPhoto
+  deleteProgressPhoto,
+  deleteAccount
 } = usersApi

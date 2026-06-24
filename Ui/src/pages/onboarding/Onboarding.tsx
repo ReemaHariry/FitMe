@@ -17,7 +17,7 @@ const onboardingSchema = z.object({
   gender: z.enum(['male', 'female']),
   age: z.number().min(13).max(100),
   height: z.number().min(100).max(250),
-  weight: z.number().min(30).max(300),
+  weight: z.number().min(10).max(300),
   fitnessGoal: z.enum(['lose_weight', 'build_muscle', 'maintain']),
   trainingDaysPerWeek: z.number().min(1).max(7),
   preferredWorkoutDuration: z.number().min(15).max(180),
