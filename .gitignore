@@ -61,7 +61,10 @@ test_videos/
 # Datasets
 *.csv
 *.xlsx
-exercise_dataset/
+# Ignore the bulky dataset contents but keep the extraction script tracked
+exercise_dataset/*
+!exercise_dataset/
+!exercise_dataset/extract_video.py
 datasets/
 
 # ============================================================================
