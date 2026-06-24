@@ -32,8 +32,8 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
     const weight = parseFloat(inputWeight)
     
     // Validation
-    if (isNaN(weight) || weight < 20 || weight > 500) {
-      setError('Please enter a valid weight between 20 and 500 kg')
+    if (isNaN(weight) || weight < 10 || weight > 500) {
+      setError('Please enter a valid weight between 10 and 500 kg')
       return
     }
 
@@ -70,13 +70,14 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
   const weeklyContext = weeklyChange !== null ? getWeightGoalContext(weeklyChange, fitnessGoal) : null
 
   // FIXED (Problem 5): Deduplicate chart data by date to avoid duplicate x-axis labels
-  const chartDataMap = new Map<string, { date: string; weight: number }>()
+  const chartDataMap = new Map<string, { date: string; weight: number; note?: string }>()
   logs.forEach(log => {
     const dateKey = new Date(log.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     // Keep only the latest entry for each date
     chartDataMap.set(dateKey, {
       date: dateKey,
-      weight: log.weight_kg
+      weight: log.weight_kg,
+      note: log.note || undefined
     })
   })
   const chartData = Array.from(chartDataMap.values())
@@ -175,9 +176,16 @@ export default function WeightTracker({ initialLogs, fitnessGoal, onLogsUpdate }
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs">
-                          <p className="font-medium">{payload[0].payload.date}</p>
-                          <p className="text-primary">{payload[0].value} kg</p>
+                        <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs z-50 shadow-xl max-w-[200px]">
+                          <p className="font-medium mb-1">{payload[0].payload.date}</p>
+                          <p className="text-primary font-bold">{payload[0].value} kg</p>
+                          {payload[0].payload.note && (
+                            <div className="mt-2 pt-2 border-t border-gray-700">
+                              <p className="text-gray-300 whitespace-normal break-words italic">
+                                "{payload[0].payload.note}"
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )
                     }

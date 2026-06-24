@@ -20,6 +20,7 @@ import { useThemeStore } from '@/app/theme'
 import { useI18nStore } from '@/app/i18n'
 import { dashboardApi } from '@/api/dashboard'
 import { reportsApi } from '@/api/reports'
+import { usersApi } from '@/api/users'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Select from '@/components/ui/Select'
@@ -127,12 +128,13 @@ export default function Settings() {
     try {
       setIsDeleting(true)
       
-      // Call logout which clears all data
+      // 1. Call backend to completely wipe account from Supabase
+      await usersApi.deleteAccount()
+      
+      // 2. Call local logout to clear React state & localStorage
       await logout()
       
-      // Note: Actual account deletion from Supabase would require a backend endpoint
-      // For now, this logs the user out and clears all local data
-      alert('Account data cleared. You have been logged out.')
+      alert('Your account and all associated data have been permanently deleted.')
       navigate('/login')
     } catch (error) {
       console.error('Delete account failed:', error)
