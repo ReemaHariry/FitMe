@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  ArrowLeft, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle,
   Clock,
   Target,
   TrendingUp,
   Award,
   AlertCircle,
-  BarChart3
+  BarChart3,
+  Info,
+  AlertOctagon,
+  ShieldAlert,
+  HelpCircle
 } from 'lucide-react'
 import { reportsApi, ReportDetailResponse } from '@/api/reports'
 import Button from '@/components/ui/Button'
@@ -60,13 +64,40 @@ export default function ReportDetail() {
       .join(' ')
   }
 
-  const getSeverityColor = (severity: 'low' | 'medium' | 'high') => {
-    switch (severity) {
-      case 'high': return 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400'
-      case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400'
-      case 'low': return 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400'
-    }
-  }
+  // Severity metadata: label, subtitle, "why it matters" text, pill styling and icon.
+  // Driven by the backend `severity` field (low | medium | high).
+  const SEVERITY = {
+    high: {
+      rank: 3,
+      label: 'High injury risk',
+      subtitle: 'Correct this first to reduce injury risk.',
+      why: 'Repeating this mistake significantly increases your risk of injury. Prioritise fixing it before the others.',
+      badge: 'text-red-700 bg-red-100 dark:bg-red-900/20 dark:text-red-300',
+      Icon: AlertOctagon,
+    },
+    medium: {
+      rank: 2,
+      label: 'Medium injury risk',
+      subtitle: 'May cause strain if repeated.',
+      why: 'If this keeps happening it may cause strain over time. Correcting it keeps your training both safe and effective.',
+      badge: 'text-amber-700 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300',
+      Icon: AlertTriangle,
+    },
+    low: {
+      rank: 1,
+      label: 'Low injury risk',
+      subtitle: 'Mainly affects exercise quality.',
+      why: 'This mainly affects how effective your exercise is rather than your safety, but cleaning it up improves your results.',
+      badge: 'text-teal-700 bg-teal-100 dark:bg-teal-900/20 dark:text-teal-300',
+      Icon: Info,
+    },
+  } as const
+
+  // "Why it matters" text: prefer the report's injury_risk field, else severity-specific text.
+  const getWhyItMatters = (severity: 'low' | 'medium' | 'high', injuryRisk?: string) =>
+    injuryRisk
+      ? `Repeating this mistake may increase the risk of ${injuryRisk} and reduce your workout effectiveness.`
+      : SEVERITY[severity].why
 
   const getPerformanceRatingColor = (rating: string) => {
     switch (rating.toLowerCase()) {
@@ -116,6 +147,12 @@ export default function ReportDetail() {
   }
 
   const { full_report, session } = report
+
+  // Sort by severity (high → medium → low); tie-break by count descending.
+  const sortedMistakes = [...full_report.mistakes].sort((a, b) => {
+    const diff = SEVERITY[b.severity].rank - SEVERITY[a.severity].rank
+    return diff !== 0 ? diff : b.count - a.count
+  })
 
   return (
     <div className="space-y-6">
@@ -253,8 +290,40 @@ export default function ReportDetail() {
             </h2>
           </div>
 
+          {/* Injury Risk Guide */}
+          {sortedMistakes.length > 0 && (
+            <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
+              <div className="flex items-center mb-3">
+                <ShieldAlert className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Injury Risk Guide
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="flex items-start space-x-2">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-teal-600 dark:text-teal-400" />
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
+                    <span className="font-semibold text-teal-700 dark:text-teal-300">Low</span> — affects performance more than safety.
+                  </p>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
+                    <span className="font-semibold text-amber-700 dark:text-amber-300">Medium</span> — may cause strain if repeated.
+                  </p>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <AlertOctagon className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
+                    <span className="font-semibold text-red-700 dark:text-red-300">High</span> — correct this first to reduce injury risk.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-6">
-            {full_report.mistakes.map((mistake, index) => (
+            {sortedMistakes.map((mistake, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -20 }}
@@ -276,9 +345,34 @@ export default function ReportDetail() {
                       <span>Last seen: {mistake.last_seen_at}</span>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-lg text-xs font-medium ${getSeverityColor(mistake.severity)}`}>
-                    {mistake.severity.toUpperCase()}
-                  </span>
+                  <div className="flex flex-col items-end text-right flex-shrink-0 ml-3">
+                    {(() => {
+                      const sev = SEVERITY[mistake.severity]
+                      const SevIcon = sev.Icon
+                      return (
+                        <>
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${sev.badge}`}>
+                            <SevIcon className="w-3.5 h-3.5" />
+                            {sev.label}
+                          </span>
+                          <span className="mt-1 text-xs text-gray-500 dark:text-gray-400 max-w-[12rem]">
+                            {sev.subtitle}
+                          </span>
+                        </>
+                      )
+                    })()}
+                  </div>
+                </div>
+
+                {/* Why it matters */}
+                <div className="bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center">
+                    <HelpCircle className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+                    Why it matters
+                  </h4>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {getWhyItMatters(mistake.severity, mistake.warning?.injury_risk)}
+                  </p>
                 </div>
 
                 {/* Correction Tip */}
