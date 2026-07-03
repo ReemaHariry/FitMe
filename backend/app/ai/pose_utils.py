@@ -59,27 +59,17 @@ def calculate_form_score(report: dict, total_frames: int) -> int:
     # Check if this is a "no pose detected" report
     if report.get("no_pose_detected"):
         return 0  # Return 0 score for sessions with no pose detected
-    
+
+    # Single source of truth: use the score computed by ReportGenerator.
+    # The rating is derived FROM this score, so no bucket-clamping is needed.
+    overall = report.get("overall_summary", {})
+    stored = overall.get("form_score")
+    if isinstance(stored, int):
+        return stored
+
+    # Fallback (older reports without a stored score): same canonical formula.
     total_mistakes = report["statistics"]["total_mistakes"]
-    performance_rating = report["overall_summary"]["performance_rating"]
-
-    # Base calculation: mistakes per frame ratio
-    if total_frames == 0:
-        form_score = 100
-    else:
-        mistake_ratio = total_mistakes / max(total_frames, 1)
-        # Scale: each mistake per frame reduces score significantly
-        # Using 500 as multiplier means ~2 mistakes per 1000 frames = 100 score
-        form_score = max(0, min(100, int(100 - (mistake_ratio * 500))))
-
-    # Adjust based on performance rating to ensure consistency
-    if performance_rating == "excellent":
-        form_score = max(form_score, 90)
-    elif performance_rating == "good":
-        form_score = max(form_score, 75)
-    elif performance_rating == "fair":
-        form_score = max(form_score, 50)
-    else:  # needs_improvement
-        form_score = min(form_score, 49)
-
-    return form_score
+    if total_frames <= 0:
+        return 100
+    mistake_ratio = total_mistakes / max(total_frames, 1)
+    return max(0, min(100, int(100 - (mistake_ratio * 500))))

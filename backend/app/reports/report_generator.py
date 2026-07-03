@@ -136,14 +136,55 @@ class ReportGenerator:
 
         return summaries
 
+    @staticmethod
+    def compute_form_score(total_mistakes: int, total_frames: int) -> int:
+        """
+        Numeric form score (0-100) derived from de-duplicated mistakes per frame.
+
+        This is the single, canonical formula for the score. The textual
+        performance_rating is derived from this number (see rating_from_score),
+        so the two always agree.
+        """
+        if total_frames <= 0:
+            return 100
+        mistake_ratio = total_mistakes / max(total_frames, 1)
+        return max(0, min(100, int(100 - (mistake_ratio * 500))))
+
+    @staticmethod
+    def rating_from_score(score: int) -> str:
+        """
+        Derive the textual rating directly from form_score so the numeric score
+        and the label are always consistent.
+
+        Bands: 90-100 excellent | 75-89 good | 50-74 fair | 0-49 needs_improvement
+        """
+        if score >= 90:
+            return "excellent"
+        elif score >= 75:
+            return "good"
+        elif score >= 50:
+            return "fair"
+        return "needs_improvement"
+
+    # Human-readable message for each rating band
+    _RATING_MESSAGES = {
+        "excellent": "Outstanding! You maintained excellent form throughout your entire session. Keep up the great work!",
+        "good": "Great job! You had only a few form breaks. Focus on the tips below to perfect your technique.",
+        "fair": "Good effort! There's room for improvement in your form. Review the corrections below for your next session.",
+        "needs_improvement": "We noticed several form issues during your workout. Don't worry - form takes practice! Focus on the key corrections below.",
+    }
+
     @classmethod
-    def generate_overall_summary(cls, session_data: dict, mistake_summaries: List[Dict]) -> Dict:
+    def generate_overall_summary(cls, session_data: dict, mistake_summaries: List[Dict],
+                                 performance_rating: str) -> Dict:
         """
         Generate overall session summary with key insights.
 
         Args:
             session_data: Session summary from SessionTracker
             mistake_summaries: Processed mistake summaries
+            performance_rating: Rating already derived from the form_score, so the
+                                score and the label stay consistent.
 
         Returns:
             Dictionary with overall insights
@@ -156,26 +197,15 @@ class ReportGenerator:
         unique_mistake_types = len(mistake_summaries)
         high_risk_count = sum(1 for m in mistake_summaries if m.get("warning"))
 
-        # Determine overall performance
-        if total_mistakes == 0:
-            performance = "excellent"
-            message = "Outstanding! You maintained excellent form throughout your entire session. Keep up the great work!"
-        elif total_mistakes <= 3:
-            performance = "good"
-            message = "Great job! You had only a few form breaks. Focus on the tips below to perfect your technique."
-        elif total_mistakes <= 10:
-            performance = "fair"
-            message = "Good effort! There's room for improvement in your form. Review the corrections below for your next session."
-        else:
-            performance = "needs_improvement"
-            message = "We noticed several form issues during your workout. Don't worry - form takes practice! Focus on the key corrections below."
+        # Message is chosen by the (score-derived) rating
+        message = cls._RATING_MESSAGES.get(performance_rating, cls._RATING_MESSAGES["needs_improvement"])
 
         # Add injury risk note if applicable
         if high_risk_count > 0:
             message += f" Please pay special attention to the {high_risk_count} warning(s) below to prevent potential injury."
 
         return {
-            "performance_rating": performance,
+            "performance_rating": performance_rating,
             "message": message,
             "total_mistakes": total_mistakes,
             "unique_mistake_types": unique_mistake_types,
@@ -206,8 +236,16 @@ class ReportGenerator:
         # Generate mistake summaries
         mistake_summaries = cls.generate_mistake_summary(session_data)
 
-        # Generate overall summary
-        overall_summary = cls.generate_overall_summary(session_data, mistake_summaries)
+        # Compute the form score FIRST, then derive the rating from it, so the
+        # numeric score and the textual rating are always consistent.
+        total_mistakes = session_data.get("total_mistakes", 0)
+        form_score = cls.compute_form_score(total_mistakes, total_frames)
+        performance_rating = cls.rating_from_score(form_score)
+
+        # Generate overall summary using the score-derived rating
+        overall_summary = cls.generate_overall_summary(session_data, mistake_summaries, performance_rating)
+        # Store the score in the report so downstream code uses one canonical value
+        overall_summary["form_score"] = form_score
 
         # Build complete report
         report = {
