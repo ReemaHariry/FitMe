@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Header, status
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from app.services.supabase_service import get_supabase_client, get_profile, verify_token
-
+from app.config import settings
 
 # ============================================================================
 # PYDANTIC MODELS (Request/Response schemas)
@@ -351,3 +351,46 @@ async def logout(authorization: Optional[str] = Header(None)):
         # Even if logout fails on backend, return success
         # Frontend will clear localStorage anyway
         return MessageResponse(message="Logged out successfully")
+    
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    access_token: str
+    new_password: str = Field(..., min_length=8)
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+async def forgot_password(data: ForgotPasswordRequest):
+    """Send a password reset email via Supabase."""
+    try:
+        supabase = get_supabase_client()
+        supabase.auth.reset_password_for_email(
+            data.email,
+            {"redirect_to": f"{settings.frontend_url_alt}/reset-password"}
+        )
+    except Exception as e:
+        print(f"Forgot password error: {e}")
+    # Always return success — never reveal whether the email exists
+    return MessageResponse(message="If that email exists, a reset link has been sent.")
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(data: ResetPasswordRequest):
+    """Set a new password using the recovery access_token from the email link."""
+    try:
+        supabase = get_supabase_client()
+        user_response = supabase.auth.get_user(data.access_token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid or expired reset link")
+
+        supabase.auth.admin.update_user_by_id(
+            user_response.user.id,
+            {"password": data.new_password}
+        )
+        return MessageResponse(message="Password updated successfully")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Reset password error: {e}")
+        raise HTTPException(status_code=400, detail="Could not reset password")

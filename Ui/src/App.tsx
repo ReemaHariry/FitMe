@@ -6,6 +6,8 @@ import { checkSessionReminder } from './utils/sessionReminders'
 import Layout from './components/layout/Layout'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 import Onboarding from './pages/onboarding/Onboarding'
 import Dashboard from './pages/dashboard/Dashboard'
 import Workouts from './pages/workout/Workouts'
@@ -63,6 +65,8 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} />
+          <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Protected routes */}
           <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" />}>

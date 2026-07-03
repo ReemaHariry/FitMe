@@ -117,7 +117,7 @@ export default function Login() {
               </button>
             </div>
 
-            <div className="flex items-center">
+            <div className="flex items-center justify-between">
               <label className="flex items-center">
                 <input
                   {...register('rememberMe')}
@@ -128,6 +128,9 @@ export default function Login() {
                   {t('auth.rememberMe')}
                 </span>
               </label>
+              <Link to="/forgot-password" className="text-sm text-primary hover:text-primary/80 font-medium">
+                Forgot password?
+              </Link>
             </div>
 
             <Button

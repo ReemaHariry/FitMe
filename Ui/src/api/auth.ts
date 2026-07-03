@@ -6,6 +6,7 @@
  * - Register
  * - Logout
  * - Get current user
+ * - Forgot / Reset password
  */
 
 import apiClient from './client'
@@ -165,7 +166,49 @@ export const authApi = {
     const response = await apiClient.get<AuthUser>('/auth/me')
     return response.data
   },
+
+  /**
+   * Request a password reset email.
+   *
+   * Always resolves successfully regardless of whether the email exists
+   * (the backend intentionally doesn't reveal this, for security).
+   *
+   * @param email - User's email address
+   * @returns Promise with a generic confirmation message
+   *
+   * @example
+   * await authApi.forgotPassword('user@example.com')
+   * // Show "check your inbox" message
+   */
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await apiClient.post('/auth/forgot-password', { email })
+    return response.data
+  },
+
+  /**
+   * Set a new password using the access token from the reset email link.
+   *
+   * @param accessToken - Recovery access_token parsed from the URL hash
+   * @param newPassword - The user's new password (min 8 characters)
+   * @returns Promise with a confirmation message
+   *
+   * @throws Error if the token is invalid or expired (401/400)
+   *
+   * @example
+   * await authApi.resetPassword(token, 'newSecurePassword123')
+   * navigate('/login')
+   */
+  resetPassword: async (
+    accessToken: string,
+    newPassword: string
+  ): Promise<{ message: string }> => {
+    const response = await apiClient.post('/auth/reset-password', {
+      access_token: accessToken,
+      new_password: newPassword,
+    })
+    return response.data
+  },
 }
 
 // Export individual functions for convenience
-export const { login, register, logout, getCurrentUser } = authApi
+export const { login, register, logout, getCurrentUser, forgotPassword, resetPassword } = authApi
